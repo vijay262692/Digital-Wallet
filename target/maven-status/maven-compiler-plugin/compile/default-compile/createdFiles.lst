@@ -1,0 +1,7 @@
+com\digitalwallet\common\KeyManager.class
+com\digitalwallet\controller\WalletController.class
+com\digitalwallet\DigitalWalletApplication.class
+com\digitalwallet\mdes\MDESService.class
+com\digitalwallet\common\CryptoUtil.class
+com\digitalwallet\vts\VTSService.class
+com\digitalwallet\broker\PNOBroker.class

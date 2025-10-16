@@ -1,0 +1,58 @@
+{
+  "info": {
+    "name": "Digital Wallet Demo Collection",
+    "_postman_id": "digital-wallet-demo-collection",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Get Public Key",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8080/api/wallet/publicKey",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "wallet",
+            "publicKey"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Add Card (encrypted)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "text/plain"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "<Place Base64-encrypted payload here>"
+        },
+        "url": {
+          "raw": "http://localhost:8080/api/wallet/addCard",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8080",
+          "path": [
+            "api",
+            "wallet",
+            "addCard"
+          ]
+        }
+      }
+    }
+  ]
+}
