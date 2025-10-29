@@ -3,91 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <title>Make Payment | Digital Wallet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #007bff, #00b4db);
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      margin: 0;
-    }
-
-    .payment-box {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 30px;
-      width: 360px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    select, input {
-      width: 100%;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      margin-top: 10px;
-      font-size: 14px;
-      color: #333;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 20px;
-      background: linear-gradient(90deg, #00c6ff, #0072ff);
-      border: none;
-      border-radius: 8px;
-      padding: 12px;
-      color: white;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    button:hover {
-      transform: translateY(-2px);
-    }
-
-    .result {
-      margin-top: 15px;
-      text-align: center;
-      font-size: 14px;
-    }
+    body { font-family:'Poppins'; background:linear-gradient(135deg,#0072ff,#00b4db);
+           display:flex; flex-direction:column; align-items:center; padding:40px; color:white; }
+    select, input, button { width:300px; padding:10px; margin:8px; border-radius:8px; border:none; font-size:15px; }
+    button { background:#00c6ff; color:white; cursor:pointer; }
   </style>
 </head>
 <body>
-  <div class="payment-box">
-    <h2>💸 Make a Payment</h2>
-    <select id="tokenSelect"></select>
-    <input type="text" id="amount" placeholder="Amount (₹)" />
-    <input type="text" id="merchant" placeholder="Merchant Name" />
-    <button onclick="makePayment()">Pay Now</button>
-    <div class="result" id="result"></div>
-  </div>
+  <h2>💸 Make a Payment</h2>
+  <select id="tokenSelect"></select>
+  <input id="amount" placeholder="Enter Amount ₹" />
+  <input id="merchant" placeholder="Merchant Name" />
+  <button onclick="pay()">Pay</button>
+  <div id="result"></div>
 
   <script>
     async function loadCards() {
+      const username = localStorage.getItem("loggedInUser");
+      const res = await fetch(`/api/wallet/cards/${username}`);
+      const cards = await res.json();
       const select = document.getElementById("tokenSelect");
-      select.innerHTML = "<option>Loading cards...</option>";
-      const resp = await fetch("/api/wallet/cards");
-      const cards = await resp.json();
-
-      if (!cards.length) {
-        select.innerHTML = "<option>No saved cards</option>";
-        return;
-      }
-
-      select.innerHTML = "";
       cards.forEach(c => {
         const opt = document.createElement("option");
         opt.value = c.token;
@@ -96,29 +32,16 @@
       });
     }
 
-    async function makePayment() {
+    async function pay() {
       const token = document.getElementById("tokenSelect").value;
       const amount = document.getElementById("amount").value;
-      const merchant = document.getElementById("merchant").value || "Test Merchant";
-      const resultDiv = document.getElementById("result");
-
-      resultDiv.innerHTML = "⏳ Processing...";
-
-      try {
-        const res = await fetch("/api/wallet/pay", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token, amount, merchant })
-        });
-        const data = await res.json();
-        if (data.status === "SUCCESS") {
-          resultDiv.innerHTML = `<p style='color:lightgreen;'>✅ ${data.message}</p>`;
-        } else {
-          resultDiv.innerHTML = `<p style='color:pink;'>❌ ${data.message}</p>`;
-        }
-      } catch (err) {
-        resultDiv.innerHTML = `<p style='color:pink;'>❌ Error: ${err.message}</p>`;
-      }
+      const merchant = document.getElementById("merchant").value;
+      const res = await fetch("/api/wallet/pay", {
+        method:"POST", headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({ token, amount, merchant })
+      });
+      const result = await res.json();
+      document.getElementById("result").innerHTML = `<p>${result.message}</p>`;
     }
 
     loadCards();

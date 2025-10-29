@@ -3,229 +3,34 @@
 <head>
   <meta charset="UTF-8">
   <title>My Cards | Digital Wallet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet" />
   <style>
-    body {
-      font-family: 'Poppins', sans-serif;
-      background: linear-gradient(135deg, #00aaff, #0044cc);
-      color: #333;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      height: 100vh;
-      margin: 0;
-      padding: 40px 0;
-    }
-
-    h2 {
-      color: white;
-      margin-bottom: 20px;
-      font-size: 28px;
-      font-weight: 600;
-      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    }
-
-    .card-table {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 16px;
-      padding: 20px 30px;
-      width: 90%;
-      max-width: 800px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      overflow: hidden;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      color: #fff;
-    }
-
-    thead {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    th, td {
-      padding: 12px 16px;
-      text-align: left;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    th {
-      font-weight: 600;
-      font-size: 14px;
-      letter-spacing: 0.5px;
-      color: #e5e5e5;
-    }
-
-    tr:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transition: all 0.3s ease;
-    }
-
-    .token {
-      font-family: monospace;
-      color: #aef1ff;
-    }
-
-    .btn-refresh {
-      margin: 20px 0;
-      padding: 10px 18px;
-      border: none;
-      border-radius: 8px;
-      background: linear-gradient(90deg, #00c6ff 0%, #0072ff 100%);
-      color: white;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-
-    .btn-refresh:hover {
-      background: linear-gradient(90deg, #0072ff 0%, #00c6ff 100%);
-      transform: translateY(-2px);
-    }
-
-    .empty {
-      text-align: center;
-      color: #ddd;
-      font-size: 15px;
-      padding: 15px;
-    }
-
-    /* Pagination */
-    .pagination {
-      display: flex;
-      justify-content: center;
-      margin-top: 15px;
-      gap: 10px;
-    }
-
-    .pagination button {
-      background: rgba(255,255,255,0.2);
-      border: none;
-      color: #fff;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .pagination button:hover {
-      background: rgba(255,255,255,0.4);
-    }
-
-    .pagination button.active {
-      background: #00b4db;
-      color: #fff;
-      font-weight: 600;
-    }
-
-    .footer {
-      margin-top: 25px;
-      color: rgba(255,255,255,0.7);
-      font-size: 12px;
-    }
+    body { font-family:'Poppins'; background:linear-gradient(135deg,#0072ff,#00b4db);
+           color:white; display:flex; flex-direction:column; align-items:center; padding:40px; }
+    table { border-collapse:collapse; width:70%; margin-top:20px; }
+    th, td { padding:12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.3); }
+    button { margin-top:20px; padding:10px 20px; border:none; border-radius:8px; background:#00c6ff; color:white; cursor:pointer; }
   </style>
 </head>
 <body>
-
   <h2>💳 My Saved Cards</h2>
-
-  <button class="btn-refresh" onclick="loadCards()">🔄 Refresh Cards</button>
-
-  <div class="card-table">
-    <table id="cardsTable">
-      <thead>
-        <tr>
-          <th>Provider</th>
-          <th>Masked PAN</th>
-          <th>Expiry</th>
-          <th>Token</th>
-          <th>Status</th>
-          <th>Added On</th>
-        </tr>
-      </thead>
-      <tbody id="cardList">
-        <tr><td colspan="6" class="empty">Loading cards...</td></tr>
-      </tbody>
-    </table>
-
-    <div class="pagination" id="pagination"></div>
-  </div>
-
-  <div class="footer">
-    © 2025 Digital Wallet • Secure Tokenization Platform
-  </div>
+  <table id="cardTable">
+    <thead><tr><th>Provider</th><th>Masked PAN</th><th>Token</th><th>Expiry</th></tr></thead>
+    <tbody></tbody>
+  </table>
+  <button onclick="window.location.href='add-card.html'">➕ Add New Card</button>
 
   <script>
-    let allCards = [];
-    let currentPage = 1;
-    const pageSize = 5; // Number of cards per page
-
     async function loadCards() {
-      const tbody = document.getElementById("cardList");
-      tbody.innerHTML = `<tr><td colspan="6" class="empty">Fetching cards...</td></tr>`;
-
-      try {
-        const response = await fetch("/api/wallet/cards");
-        if (!response.ok) throw new Error("Failed to fetch cards");
-        allCards = await response.json();
-        if (!allCards || allCards.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="6" class="empty">No cards saved yet 🪙</td></tr>`;
-          document.getElementById("pagination").innerHTML = "";
-          return;
-        }
-        currentPage = 1;
-        renderPage();
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="empty">❌ Error: ${err.message}</td></tr>`;
-      }
-    }
-
-    function renderPage() {
-      const tbody = document.getElementById("cardList");
-      const startIndex = (currentPage - 1) * pageSize;
-      const pageData = allCards.slice(startIndex, startIndex + pageSize);
-
+      const username = localStorage.getItem("loggedInUser");
+      const res = await fetch(`/api/wallet/cards/${username}`);
+      const cards = await res.json();
+      const tbody = document.querySelector("#cardTable tbody");
       tbody.innerHTML = "";
-      pageData.forEach(card => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${card.provider || "-"}</td>
-          <td>${card.maskedPan || "**** **** **** ****"}</td>
-          <td>${card.expiry || "-"}</td>
-          <td class="token">${card.token || "-"}</td>
-          <td>${card.status || "ACTIVE"}</td>
-          <td>${card.timestamp || new Date().toLocaleString()}</td>
-        `;
-        tbody.appendChild(tr);
+      cards.forEach(c => {
+        const row = `<tr><td>${c.provider}</td><td>${c.maskedPan}</td><td>${c.token}</td><td>${c.expiry}</td></tr>`;
+        tbody.innerHTML += row;
       });
-
-      renderPagination();
     }
-
-    function renderPagination() {
-      const totalPages = Math.ceil(allCards.length / pageSize);
-      const pagination = document.getElementById("pagination");
-      pagination.innerHTML = "";
-
-      for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement("button");
-        btn.textContent = i;
-        if (i === currentPage) btn.classList.add("active");
-        btn.addEventListener("click", () => {
-          currentPage = i;
-          renderPage();
-        });
-        pagination.appendChild(btn);
-      }
-    }
-
-    // Load on startup
     loadCards();
   </script>
 </body>

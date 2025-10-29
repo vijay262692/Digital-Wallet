@@ -8,6 +8,8 @@ import com.digitalwallet.broker.PNOBroker;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import com.digitalwallet.service.UserService;
+import com.digitalwallet.model.User;
 
 import java.security.KeyPair;
 import java.util.*;
@@ -28,6 +30,8 @@ public class WalletController {
     @Autowired 
     private TransactionRepository transactionRepository;
     
+    @Autowired
+    private UserService userService; 
     
 
 
@@ -43,52 +47,50 @@ public class WalletController {
      * Accepts encrypted card data (Base64 RSA), decrypts it, routes via broker,
      * and stores masked card + token info.
      */
-    @PostMapping(
-        value = "/addCard",
-        consumes = MediaType.TEXT_PLAIN_VALUE,
-        produces = MediaType.APPLICATION_JSON_VALUE
-    )
-    public Map<String, Object> addCard(@RequestBody String encryptedBase64) {
+    @PostMapping(value = "/addCard/{username}", consumes = MediaType.TEXT_PLAIN_VALUE)
+    public Map<String, Object> addCard(@PathVariable String username, @RequestBody String encryptedBase64) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             KeyPair kp = keyManager.getKeyPair();
-
-            // 1️⃣ Decrypt
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
             String[] parts = plain.split("\\|");
             String pan = parts.length > 0 ? parts[0] : "";
             String expiry = parts.length > 1 ? parts[1] : "";
             String cvv = parts.length > 2 ? parts[2] : "";
 
-            // 2️ Route to appropriate provider (MDES / VTS)
             Map<String, String> networkResponse = pnoBroker.routeAndTokenize(pan, plain);
 
-            //3️⃣ Prepare response with masked PAN
             response.putAll(networkResponse);
             response.put("maskedPan", "**** **** **** " + pan.substring(pan.length() - 4));
             response.put("expiry", expiry);
             response.put("cvv", "***");
             response.put("timestamp", new Date().toString());
+            response.put("username", username);
 
-            // 4️⃣ Store in in-memory repo
-            cardRepository.save(response);
+            // Save card for that user
+            cardRepository.saveForUser(username, response);
 
+            response.put("status", "SUCCESS");
+            response.put("message", "Card added successfully for user: " + username);
             return response;
         } catch (Exception e) {
             e.printStackTrace();
             response.put("status", "ERROR");
-            response.put("message", "Decryption or processing failed: " + e.getMessage());
+            response.put("message", "Failed to add card: " + e.getMessage());
             return response;
         }
     }
 
+
+
     /**
      * Returns all stored cards (masked only)
      */
-    @GetMapping(value = "/cards", produces = MediaType.APPLICATION_JSON_VALUE)
-    public List<Map<String, Object>> getStoredCards() {
-        return cardRepository.findAll();
+    @GetMapping(value = "/cards/{username}", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<Map<String, Object>> getUserCards(@PathVariable String username) {
+        return cardRepository.findAllForUser(username);
     }
+
     
     
     /**
@@ -141,6 +143,42 @@ public class WalletController {
             return response;
         }
     }
+    
+    /**
+    
+    @PostMapping(value = "/addCard/{username}", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> addCard(@PathVariable String username, @RequestBody String encryptedBase64) {
+        Map<String, Object> response = new LinkedHashMap<>();
+        try {
+            KeyPair kp = keyManager.getKeyPair();
+            String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
+            String[] parts = plain.split("\\|");
+            String pan = parts[0];
+            String expiry = parts[1];
+            String cvv = parts[2];
+
+            Map<String, String> networkResponse = pnoBroker.routeAndTokenize(pan, plain);
+
+            response.putAll(networkResponse);
+            response.put("maskedPan", "**** **** **** " + pan.substring(pan.length() - 4));
+            response.put("expiry", expiry);
+            response.put("cvv", "***");
+            response.put("timestamp", new Date().toString());
+
+            // Store under this user
+            User user = userService.authenticate(username, null);
+            if (user != null) user.addCard(response);
+
+            cardRepository.save(response);
+            return response;
+
+        } catch (Exception e) {
+            response.put("status", "ERROR");
+            response.put("message", "Decryption failed: " + e.getMessage());
+            return response;
+        }
+    }
+**/
     
     @GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<Map<String, Object>> getTransactions() {

@@ -1,35 +1,40 @@
 package com.digitalwallet.repository;
 
 import org.springframework.stereotype.Repository;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+
+import java.util.*;
 
 @Repository
 public class CardRepository {
 
-    // 💾 Simple in-memory storage
-    private final List<Map<String, Object>> storedCards = new ArrayList<>();
+    // 🗃️ Store cards per user: username → list of cards
+    private final Map<String, List<Map<String, Object>>> userCards = new HashMap<>();
 
-    // 🟢 Save a card entry (called by WalletController after tokenization)
-    public void save(Map<String, Object> cardInfo) {
-        storedCards.add(cardInfo);
+    // 💾 Save a card for a specific user
+    public void saveForUser(String username, Map<String, Object> cardInfo) {
+        userCards.computeIfAbsent(username, k -> new ArrayList<>()).add(cardInfo);
     }
 
-    // 🔵 Retrieve all stored cards
-    public List<Map<String, Object>> findAll() {
-        return new ArrayList<>(storedCards);
+    // 📦 Get all cards for a specific user
+    public List<Map<String, Object>> findAllForUser(String username) {
+        return userCards.getOrDefault(username, new ArrayList<>());
     }
 
-    // 🔍 Find a card by its token
+    // 🧾 (Optional) Get all cards for admin view
+    public Map<String, List<Map<String, Object>>> findAllUsers() {
+        return userCards;
+    }
+    
     public Map<String, Object> findByToken(String token) {
-        if (token == null || token.isEmpty()) return null;
-        for (Map<String, Object> card : storedCards) {
-            Object storedToken = card.get("token");
-            if (storedToken != null && storedToken.toString().equals(token)) {
-                return card;
+        // Search across all users’ stored cards for a matching token
+        for (List<Map<String, Object>> cards : userCards.values()) {
+            for (Map<String, Object> card : cards) {
+                if (token.equals(card.get("token"))) {
+                    return card;
+                }
             }
         }
-        return null; // not found
+        return null; // Not found
     }
+
 }

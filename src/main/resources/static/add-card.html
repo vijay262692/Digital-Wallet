@@ -20,7 +20,7 @@
       backdrop-filter: blur(12px);
       border-radius: 16px;
       padding: 30px 40px;
-      width: 360px;
+      width: 380px;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
       color: #fff;
       transition: transform 0.3s ease;
@@ -33,8 +33,15 @@
     h2 {
       text-align: center;
       font-weight: 600;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       color: #fff;
+    }
+
+    #welcome {
+      text-align: center;
+      font-size: 14px;
+      margin-bottom: 15px;
+      color: rgba(255, 255, 255, 0.8);
     }
 
     label {
@@ -107,6 +114,7 @@
 <body>
   <div class="card-container">
     <h2>💳 Add Your Card</h2>
+    <div id="welcome"></div>
 
     <form id="cardForm">
       <label>Card Number</label>
@@ -129,6 +137,13 @@
   </div>
 
   <script>
+    const username = localStorage.getItem("loggedInUser");
+    if (!username) {
+      window.location.href = "login.html";
+    }
+
+    document.getElementById("welcome").innerHTML = `👋 Welcome, <b>${username}</b>`;
+
     async function encryptCardData(publicKeyPem, cardData) {
       const forgePublicKey = forge.pki.publicKeyFromPem(publicKeyPem);
       const encrypted = forge.util.encode64(
@@ -146,7 +161,6 @@
         const expiry = document.getElementById("expiry").value.trim();
         const cvv = document.getElementById("cvv").value.trim();
         const cardData = `${pan}|${expiry}|${cvv}`;
-
         const resultDiv = document.getElementById("result");
         resultDiv.innerHTML = "⏳ Encrypting and sending...";
 
@@ -161,16 +175,18 @@
 
           const encrypted = await encryptCardData(publicKeyPem, cardData);
 
-          const response = await fetch("/api/wallet/addCard", {
+          const response = await fetch(`/api/wallet/addCard/${username}`, {
             method: "POST",
             headers: { "Content-Type": "text/plain" },
             body: encrypted,
           });
 
           const result = await response.json();
-          resultDiv.innerHTML = `<p class="success">✅ Card Added Successfully<br><small>${JSON.stringify(
-            result
-          )}</small></p>`;
+          if (result.status === "ERROR") {
+            resultDiv.innerHTML = `<p class="error">❌ ${result.message}</p>`;
+          } else {
+            resultDiv.innerHTML = `<p class="success">✅ Card Added Successfully<br><small>${result.maskedPan}</small></p>`;
+          }
         } catch (err) {
           resultDiv.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
         }
