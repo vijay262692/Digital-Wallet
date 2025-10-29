@@ -8,8 +8,7 @@ A secure Digital Wallet built with Spring Boot that encrypts card data using RSA
 
 ⚙️ Quick Setup
 1️⃣ Clone the repo
-git clone https://github.com/your-username/digital-wallet-demo.git
-cd digital-wallet-demo
+git clone https://github.com/vijay262692/Digital-Wallet.git
 
 2️⃣ Build & Run
 mvn clean install
@@ -45,10 +44,11 @@ Sample /pay request:
 
 🖥️ Frontend Pages
 Page	File	Description
-Add Card	add-card.html	Encrypts card info using RSA
-View Cards	view-cards.html	Displays masked cards
-Make Payment	make-payment.html	Pay using stored token
-Transactions	transactions.html	View transaction logs
+
+Add Card	add-card.html -->	Encrypts card info using RSA
+View Cards	view-cards.html --> 	Displays masked cards
+Make Payment	make-payment.html --> 	Pay using stored token
+Transactions	transactions.html --> 	View transaction logs
 
 👉 Place these in src/main/resources/static/ to serve via browser.
 
