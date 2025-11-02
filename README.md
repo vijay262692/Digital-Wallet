@@ -88,15 +88,25 @@ In-Memory Storage (Card + Transaction Repository)
 
 Maven Build
 
-💡 Future Enhancements
 
-H2 / MySQL persistence
 
-JWT authentication
+🚀 Future Enhancements (Roadmap)
 
-Email notifications
 
-Real Visa/MC sandbox integration
+
+✅ Move to H2/MySQL DB (instead of in-memory)
+
+✅ Add card suspend/terminate/activate actions
+
+🔥 Role-Based Access + JWT Authentication
+
+📧 Email OTP for login & card linking
+
+🔄 Token Refresh Lifecycle Simulation
+
+🧠 Add Fraud Check Simulator (Velocity + Risk Score)
+
+
 
 🧑‍💻 Author
 
