@@ -29,6 +29,8 @@
     async function register() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
+      console.log("User registration initiated:", username);
+
       const res = await fetch("/api/users/publicKey");
       const keyB64 = await res.text();
       const der = forge.util.decode64(keyB64);
