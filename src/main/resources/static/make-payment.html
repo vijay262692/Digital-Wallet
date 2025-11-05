@@ -36,6 +36,7 @@
       const token = document.getElementById("tokenSelect").value;
       const amount = document.getElementById("amount").value;
       const merchant = document.getElementById("merchant").value;
+      console.log("Payment initiated for:", merchant, "Amount:", amount); 
       const res = await fetch("/api/wallet/pay", {
         method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({ token, amount, merchant })
