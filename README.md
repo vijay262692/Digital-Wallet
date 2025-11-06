@@ -27,6 +27,7 @@ Runs on → http://localhost:8080
 ✅ Modular services & repositories
 
 🔗 API Endpoints
+
 Action	Method	Endpoint
 Get Public Key	GET	/api/wallet/publicKey
 Add Card	POST	/api/wallet/addCard
