@@ -40,11 +40,13 @@
     const role     = "USER";
 
     try {
+      // ✅ correct endpoint
       const keyB64 = await fetch("/api/user/publicKey").then(r => r.text());
       const der = forge.util.decode64(keyB64);
       const asn1 = forge.asn1.fromDer(der);
       const pubKey = forge.pki.publicKeyFromAsn1(asn1);
 
+      // ✅ backend expects username|email|password|role
       const encrypted = forge.util.encode64(
         pubKey.encrypt(`${username}|${email}|${password}|${role}`, "RSAES-PKCS1-V1_5")
       );
