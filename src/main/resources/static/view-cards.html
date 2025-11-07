@@ -1,36 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>My Cards | Digital Wallet</title>
+  <meta charset="UTF-8" />
+  <title>View Cards | Digital Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
-    body { font-family:'Poppins'; background:linear-gradient(135deg,#0072ff,#00b4db);
-           color:white; display:flex; flex-direction:column; align-items:center; padding:40px; }
-    table { border-collapse:collapse; width:70%; margin-top:20px; }
-    th, td { padding:12px; text-align:left; border-bottom:1px solid rgba(255,255,255,0.3); }
-    button { margin-top:20px; padding:10px 20px; border:none; border-radius:8px; background:#00c6ff; color:white; cursor:pointer; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      min-height: 100vh;
+      margin: 0;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+    }
+
+    h2 {
+      font-size: 28px;
+      margin-bottom: 20px;
+    }
+
+    .card-list {
+      width: 90%;
+      max-width: 800px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 16px;
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    th, td {
+      text-align: center;
+      padding: 12px;
+      color: #fff;
+    }
+
+    th {
+      background: rgba(255,255,255,0.2);
+      border-radius: 8px;
+    }
+
+    tr {
+      transition: background 0.3s;
+    }
+
+    tr:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    button {
+      border: none;
+      border-radius: 6px;
+      padding: 6px 12px;
+      margin: 3px;
+      cursor: pointer;
+      color: #fff;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+
+    .btn-suspend { background: #ff8800; }
+    .btn-activate { background: #28a745; }
+    .btn-terminate { background: #dc3545; }
+    .btn-suspend:hover { background: #cc7000; }
+    .btn-activate:hover { background: #1e7e34; }
+    .btn-terminate:hover { background: #b21f2d; }
+
+    .status {
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 12px;
+      text-transform: uppercase;
+    }
+
+    .ACTIVE { background: #28a745; }
+    .SUSPENDED { background: #ffc107; color: #222; }
+    .TERMINATED { background: #dc3545; }
   </style>
 </head>
 <body>
-  <h2>💳 My Saved Cards</h2>
-  <table id="cardTable">
-    <thead><tr><th>Provider</th><th>Masked PAN</th><th>Token</th><th>Expiry</th></tr></thead>
-    <tbody></tbody>
-  </table>
-  <button onclick="window.location.href='add-card.html'">➕ Add New Card</button>
+  <h2>💳 Your Saved Cards</h2>
+
+  <div class="card-list">
+    <table id="cardsTable">
+      <thead>
+        <tr>
+          <th>Masked Card</th>
+          <th>Provider</th>
+          <th>Token</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="cardRows">
+        <tr><td colspan="5">Loading...</td></tr>
+      </tbody>
+    </table>
+  </div>
 
   <script>
+    const username = localStorage.getItem("loggedInUser") || prompt("Enter your username:");
+
     async function loadCards() {
-      const username = localStorage.getItem("loggedInUser");
-      const res = await fetch(`/api/wallet/cards/${username}`);
-      const cards = await res.json();
-      const tbody = document.querySelector("#cardTable tbody");
-      tbody.innerHTML = "";
-      cards.forEach(c => {
-        const row = `<tr><td>${c.provider}</td><td>${c.maskedPan}</td><td>${c.token}</td><td>${c.expiry}</td></tr>`;
-        tbody.innerHTML += row;
-      });
+      const tbody = document.getElementById("cardRows");
+      tbody.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
+      try {
+        const res = await axios.get(`/api/wallet/cards/${username}`);
+        const cards = res.data;
+        if (!cards.length) {
+          tbody.innerHTML = "<tr><td colspan='5'>No cards found.</td></tr>";
+          return;
+        }
+
+        tbody.innerHTML = "";
+        cards.forEach(c => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${c.maskedPan || "**** **** **** 0000"}</td>
+            <td>${c.provider || "N/A"}</td>
+            <td>${c.token || "-"}</td>
+            <td><span class="status ${c.status || 'ACTIVE'}">${c.status || 'ACTIVE'}</span></td>
+            <td>
+              <button class="btn-suspend" onclick="updateStatus('${c.token}','SUSPENDED')">Suspend</button>
+              <button class="btn-activate" onclick="updateStatus('${c.token}','ACTIVE')">Activate</button>
+              <button class="btn-terminate" onclick="updateStatus('${c.token}','TERMINATED')">Terminate</button>
+            </td>
+          `;
+          tbody.appendChild(row);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan='5'>❌ Failed to load cards: ${err.message}</td></tr>`;
+      }
     }
+
+    async function updateStatus(token, newStatus) {
+      try {
+        const res = await axios.post("/api/wallet/cardStatus", {
+          username,
+          token,
+          status: newStatus
+        });
+        alert(res.data.message);
+        loadCards(); // reload to reflect status
+      } catch (err) {
+        alert("❌ Failed to update: " + err.message);
+      }
+    }
+
     loadCards();
   </script>
 </body>

@@ -29,15 +29,19 @@
     async function login() {
       const username = document.getElementById("username").value;
       const password = document.getElementById("password").value;
+<<<<<<< HEAD
       console.log("Sending login request to server...");
       const res = await fetch("/api/users/publicKey");
+=======
+      const res = await fetch("/api/user/publicKey");
+>>>>>>> 8c5f1d0 (Login support for username or email + register form fix)
       const keyB64 = await res.text();
       const der = forge.util.decode64(keyB64);
       const asn1 = forge.asn1.fromDer(der);
       const pubKey = forge.pki.publicKeyFromAsn1(asn1);
 const encrypted = forge.util.encode64(pubKey.encrypt(`${username}|${password}`, "RSAES-PKCS1-V1_5"));
 
-      const response = await fetch("/api/users/login", {
+      const response = await fetch("/api/user/login", {
         method: "POST", headers: { "Content-Type": "text/plain" }, body: encrypted
       });
 

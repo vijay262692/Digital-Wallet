@@ -3,92 +3,110 @@ package com.digitalwallet.controller;
 import com.digitalwallet.common.CryptoUtil;
 import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.model.User;
-import com.digitalwallet.service.UserService;
+import com.digitalwallet.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
-import java.util.Base64;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/user")
 public class UserController {
 
     @Autowired
     private KeyManager keyManager;
 
     @Autowired
-    private UserService userService;
+    private UserRepository userRepository;
 
+    /**
+     * ✅ Returns current RSA public key for encrypting login/register credentials
+     */
     @GetMapping("/publicKey")
     public String getPublicKey() {
         return CryptoUtil.publicKeyToBase64(keyManager.getKeyPair().getPublic());
     }
 
-    // 🟢 REGISTER
-    @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    /**
+     * ✅ Register a new user (Admin-only in real scenario)
+     */
+    @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
     public Map<String, Object> register(@RequestBody String encryptedBase64) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             KeyPair kp = keyManager.getKeyPair();
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
+            // Expected format: username|email|password|role
             String[] parts = plain.split("\\|");
             String username = parts[0];
-            String password = parts[1];
+            String email = parts[1];
+            String password = parts[2];
+            String role = parts.length > 3 ? parts[3] : "USER";
 
-            if (userService.findByUsername(username) != null) {
+            if (userRepository.findByUsername(username) != null) {
                 response.put("status", "ERROR");
-                response.put("message", "User already exists");
+                response.put("message", "Username already exists!");
                 return response;
             }
 
-            User user = new User(username, password, "USER");
-            userService.registerUser(user);
+            User user = new User(username, email, password, role);
+            userRepository.save(user);
+
             response.put("status", "SUCCESS");
-            response.put("message", "User registered successfully");
+            response.put("message", "User registered successfully!");
+            return response;
         } catch (Exception e) {
-            e.printStackTrace();
             response.put("status", "ERROR");
-            response.put("message", e.getMessage());
+            response.put("message", "Registration failed: " + e.getMessage());
+            return response;
         }
-        return response;
     }
 
-    // 🔐 LOGIN
-    @PostMapping(value = "/login", consumes = MediaType.TEXT_PLAIN_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    /**
+     * ✅ User login
+     */
+    @PostMapping(value = "/login", consumes = MediaType.TEXT_PLAIN_VALUE)
     public Map<String, Object> login(@RequestBody String encryptedBase64) {
         Map<String, Object> response = new LinkedHashMap<>();
         try {
             KeyPair kp = keyManager.getKeyPair();
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
+            // Expected: username|password
             String[] parts = plain.split("\\|");
             String username = parts[0];
             String password = parts[1];
 
-            User user = userService.findByUsername(username);
+            User user = userRepository.findByUsername(username);
+
             if (user == null) {
                 response.put("status", "ERROR");
-                response.put("message", "Invalid credentials: user not found");
+                response.put("message", "User not found!");
                 return response;
             }
 
-            // 🔍 compare passwords exactly
+            if (!user.isActive()) {
+                response.put("status", "ERROR");
+                response.put("message", "Account not active!");
+                return response;
+            }
+
             if (!user.getPassword().equals(password)) {
                 response.put("status", "ERROR");
-                response.put("message", "Invalid credentials: wrong password");
+                response.put("message", "Invalid credentials!");
                 return response;
             }
 
             response.put("status", "SUCCESS");
-            response.put("message", "Login successful");
+            response.put("message", "Login successful!");
+            response.put("role", user.getRole());
+            return response;
+
         } catch (Exception e) {
-            e.printStackTrace();
             response.put("status", "ERROR");
-            response.put("message", e.getMessage());
+            response.put("message", "Login failed: " + e.getMessage());
+            return response;
         }
-        return response;
     }
 }

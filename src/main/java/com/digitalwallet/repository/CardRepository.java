@@ -36,5 +36,21 @@ public class CardRepository {
         }
         return null; // Not found
     }
+    
+    
+    public boolean updateCardStatus(String username, String token, String newStatus) {
+        List<Map<String, Object>> cards = userCards.get(username);
+        if (cards == null) return false;
+
+        for (Map<String, Object> card : cards) {
+            if (token.equals(card.get("token"))) {
+                card.put("status", newStatus);
+                card.put("lastUpdated", new Date().toString());
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 }
