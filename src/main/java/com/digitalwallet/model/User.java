@@ -4,7 +4,7 @@ import java.util.*;
 import java.time.LocalDateTime;
 
 public class User {
-
+ 
     private String username;
     private String email;
     private String password;

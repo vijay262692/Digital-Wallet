@@ -42,7 +42,7 @@
       });
 
       const result = await response.json();
-      if (result.status === "SUCCESS") {
+      if (result.status === "SUCCESS") { 
         localStorage.setItem("loggedInUser", user);
         window.location.href = "view-cards.html";
       } else {

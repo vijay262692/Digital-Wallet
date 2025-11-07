@@ -37,7 +37,7 @@
     const username = document.getElementById("username").value.trim();
     const email    = document.getElementById("email").value.trim();
     const password = document.getElementById("password").value.trim();
-    const role     = "USER"; // ✅ always user
+    const role     = "USER";
 
     try {
       const keyB64 = await fetch("/api/user/publicKey").then(r => r.text());
@@ -45,14 +45,13 @@
       const asn1 = forge.asn1.fromDer(der);
       const pubKey = forge.pki.publicKeyFromAsn1(asn1);
 
-      // ✅ backend expects 4 fields
       const encrypted = forge.util.encode64(
         pubKey.encrypt(`${username}|${email}|${password}|${role}`, "RSAES-PKCS1-V1_5")
       );
 
       const response = await fetch("/api/user/register", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: { "Content-Type": "text/plain" }, 
         body: encrypted
       });
 

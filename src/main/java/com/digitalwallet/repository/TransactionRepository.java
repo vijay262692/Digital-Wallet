@@ -13,7 +13,7 @@ public class TransactionRepository {
     // 💾 Save new transaction
     public void save(Map<String, Object> txn) {
         transactions.add(txn);
-    }
+    } 
 
     // 🔍 Retrieve all transactions
     public List<Map<String, Object>> findAll() {
