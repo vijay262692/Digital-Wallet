@@ -67,19 +67,9 @@
       const token = document.getElementById("tokenSelect").value;
       const amount = document.getElementById("amount").value;
       const merchant = document.getElementById("merchant").value;
-<<<<<<< HEAD
-      console.log("Payment initiated for:", merchant, "Amount:", amount); 
-      const res = await fetch("/api/wallet/pay", {
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({ token, amount, merchant })
-      });
-      const result = await res.json();
-      document.getElementById("result").innerHTML = `<p>${result.message}</p>`;
-=======
 
       const res = await axios.post("/api/wallet/pay", { token, amount, merchant });
       document.getElementById("result").textContent = res.data.message;
->>>>>>> 8c5f1d0 (Login support for username or email + register form fix)
     }
 
     loadCards();

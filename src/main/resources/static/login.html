@@ -6,7 +6,7 @@
   <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
   <style>
     body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg,#00b4db,#0072ff);
-           display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; }
+           display: flex; justify-content: center; align-items: center; height: 100vh; color: #fff; margin:0; }
     .box { background: rgba(255,255,255,0.1); padding: 40px; border-radius: 16px; width: 360px;
            backdrop-filter: blur(10px); box-shadow: 0 0 20px rgba(0,0,0,0.3); text-align: center; }
     input, button { width: 100%; padding: 10px; border: none; border-radius: 8px; margin: 8px 0; font-size: 14px; }
@@ -18,7 +18,7 @@
 <body>
   <div class="box">
     <h2>🔐 Login</h2>
-    <input id="username" placeholder="Username" required />
+    <input id="username" placeholder="Username or Email" required />
     <input id="password" type="password" placeholder="Password" required />
     <button onclick="login()">Login</button>
     <div id="result"></div>
@@ -27,19 +27,15 @@
 
   <script>
     async function login() {
-      const username = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-<<<<<<< HEAD
-      console.log("Sending login request to server...");
-      const res = await fetch("/api/users/publicKey");
-=======
-      const res = await fetch("/api/user/publicKey");
->>>>>>> 8c5f1d0 (Login support for username or email + register form fix)
-      const keyB64 = await res.text();
+      const user = document.getElementById("username").value.trim();
+      const password = document.getElementById("password").value.trim();
+
+      const keyB64 = await fetch("/api/user/publicKey").then(r => r.text());
       const der = forge.util.decode64(keyB64);
       const asn1 = forge.asn1.fromDer(der);
       const pubKey = forge.pki.publicKeyFromAsn1(asn1);
-const encrypted = forge.util.encode64(pubKey.encrypt(`${username}|${password}`, "RSAES-PKCS1-V1_5"));
+
+      const encrypted = forge.util.encode64(pubKey.encrypt(`${user}|${password}`, "RSAES-PKCS1-V1_5"));
 
       const response = await fetch("/api/user/login", {
         method: "POST", headers: { "Content-Type": "text/plain" }, body: encrypted
@@ -47,7 +43,7 @@ const encrypted = forge.util.encode64(pubKey.encrypt(`${username}|${password}`, 
 
       const result = await response.json();
       if (result.status === "SUCCESS") {
-        localStorage.setItem("loggedInUser", username);
+        localStorage.setItem("loggedInUser", user);
         window.location.href = "view-cards.html";
       } else {
         document.getElementById("result").innerHTML = `<p>${result.message}</p>`;
