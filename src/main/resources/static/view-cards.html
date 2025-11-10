@@ -2,163 +2,174 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>View Cards | Digital Wallet</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>My Cards | Digital Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
     body {
+      margin: 0;
       font-family: 'Poppins', sans-serif;
       background: linear-gradient(135deg, #007bff, #00c6ff);
-      min-height: 100vh;
-      margin: 0;
-      color: #fff;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px;
+      color: white;
     }
 
+    /* Header Navigation */
+    header {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: flex-start;
+      gap: 20px;
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
+    }
 
+    header button {
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 6px 10px;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+    header button:hover { background: rgba(255,255,255,0.25); }
 
     h2 {
-      font-size: 28px;
-      margin-bottom: 20px;
+      text-align: center;
+      margin-top: 30px;
+      font-size: 26px;
     }
 
-    .card-list {
-      width: 90%;
-      max-width: 800px;
-      background: rgba(255,255,255,0.1);
+    .glass-box {
+      width: 85%;
+      max-width: 900px;
+      margin: 25px auto;
+      background: rgba(255,255,255,0.12);
+      backdrop-filter: blur(12px);
+      padding: 25px;
       border-radius: 16px;
-      padding: 20px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
     }
 
     table {
       width: 100%;
       border-collapse: collapse;
+      margin-top: 15px;
     }
 
     th, td {
-      text-align: center;
       padding: 12px;
-      color: #fff;
+      text-align: center;
     }
 
     th {
-      background: rgba(255,255,255,0.2);
-      border-radius: 8px;
-    }
-
-    tr {
-      transition: background 0.3s;
+      background: rgba(255,255,255,0.25);
+      border-radius: 6px;
     }
 
     tr:hover {
-      background: rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.15);
     }
-
-    button {
-      border: none;
-      border-radius: 6px;
-      padding: 6px 12px;
-      margin: 3px;
-      cursor: pointer;
-      color: #fff;
-      font-weight: 500;
-      transition: 0.3s;
-    }
-
-    .btn-suspend { background: #ff8800; }
-    .btn-activate { background: #28a745; }
-    .btn-terminate { background: #dc3545; }
-    .btn-suspend:hover { background: #cc7000; }
-    .btn-activate:hover { background: #1e7e34; }
-    .btn-terminate:hover { background: #b21f2d; }
 
     .status {
-      font-weight: 600;
       padding: 4px 10px;
-      border-radius: 12px;
-      text-transform: uppercase;
+      border-radius: 10px;
+      font-weight: 600;
+      color: white;
     }
-
     .ACTIVE { background: #28a745; }
     .SUSPENDED { background: #ffc107; color: #222; }
     .TERMINATED { background: #dc3545; }
+
+    button.action-btn {
+      border: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      color: white;
+      font-weight: 500;
+      transition: 0.25s;
+    }
+    .suspend { background: #ff8c00; }
+    .activate { background: #22c55e; }
+    .terminate { background: #dc3545; }
+    .action-btn:hover { opacity: 0.8; }
+
   </style>
 </head>
 <body>
-  <h2>💳 Your Saved Cards</h2>
 
-  <div class="card-list">
-    <table id="cardsTable">
-      <thead>
+<header>
+  <button onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  <button onclick="location.href='make-payment.html'">💸 Pay</button>
+  <button onclick="location.href='transactions.html'">📜 Transactions</button>
+  <button onclick="logout()">🚪 Logout</button>
+</header>
+
+<h2>💳 Your Saved Cards</h2>
+
+<div class="glass-box">
+  <table>
+    <thead>
+      <tr>
+        <th>Card</th>
+        <th>Provider</th>
+        <th>Token</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="cardsBody">
+      <tr><td colspan="5">Loading...</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const username = localStorage.getItem("loggedInUser");
+  if (!username) location.href = "login.html";
+
+  async function loadCards() {
+    try {
+      const res = await axios.get(`/api/wallet/cards/${username}`);
+      const cards = res.data;
+      const tbody = document.getElementById("cardsBody");
+      tbody.innerHTML = cards.map(c => `
         <tr>
-          <th>Masked Card</th>
-          <th>Provider</th>
-          <th>Token</th>
-          <th>Status</th>
-          <th>Actions</th>
+          <td>${c.maskedPan}</td>
+          <td>${c.provider}</td>
+          <td>${c.token}</td>
+          <td><span class="status ${c.status}">${c.status}</span></td>
+          <td>
+            <button class="action-btn suspend" onclick="updateStatus('${c.token}','SUSPENDED')">Suspend</button>
+            <button class="action-btn activate" onclick="updateStatus('${c.token}','ACTIVE')">Activate</button>
+            <button class="action-btn terminate" onclick="updateStatus('${c.token}','TERMINATED')">Terminate</button>
+          </td>
         </tr>
-      </thead>
-      <tbody id="cardRows">
-        <tr><td colspan="5">Loading...</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <script>
-    const username = localStorage.getItem("loggedInUser") || prompt("Enter your username:");
-
-    async function loadCards() {
-      const tbody = document.getElementById("cardRows");
-      tbody.innerHTML = "<tr><td colspan='5'>⏳ Loading...</td></tr>";
-      try {
-        const res = await axios.get(`/api/wallet/cards/${username}`);
-        const cards = res.data;
-        if (!cards.length) {
-          tbody.innerHTML = "<tr><td colspan='5'>No cards found.</td></tr>";
-          return;
-        }
-
-        tbody.innerHTML = "";
-        cards.forEach(c => {
-          const row = document.createElement("tr");
-          row.innerHTML = `
-            <td>${c.maskedPan || "**** **** **** 0000"}</td>
-            <td>${c.provider || "N/A"}</td>
-            <td>${c.token || "-"}</td>
-            <td><span class="status ${c.status || 'ACTIVE'}">${c.status || 'ACTIVE'}</span></td>
-            <td>
-              <button class="btn-suspend" onclick="updateStatus('${c.token}','SUSPENDED')">Suspend</button>
-              <button class="btn-activate" onclick="updateStatus('${c.token}','ACTIVE')">Activate</button>
-              <button class="btn-terminate" onclick="updateStatus('${c.token}','TERMINATED')">Terminate</button>
-            </td>
-          `;
-          tbody.appendChild(row);
-        });
-      } catch (err) {
-        tbody.innerHTML = `<tr><td colspan='5'>❌ Failed to load cards: ${err.message}</td></tr>`;
-      }
+      `).join("");
+    } catch {
+      document.getElementById("cardsBody").innerHTML = `<tr><td colspan="5">Error loading cards.</td></tr>`;
     }
+  }
 
-    async function updateStatus(token, newStatus) {
-      try {
-        const res = await axios.post("/api/wallet/cardStatus", {
-          username,
-          token,
-          status: newStatus
-        });
-        alert(res.data.message);
-        loadCards(); // reload to reflect status
-      } catch (err) {
-        alert("❌ Failed to update: " + err.message);
-      }
-    }
-
+  async function updateStatus(token, status) {
+    await axios.post("/api/wallet/cardStatus", { username, token, status });
     loadCards();
-  </script>
+  }
+
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    window.location.href = "login.html";
+  }
+
+  loadCards();
+</script>
 </body>
 </html>

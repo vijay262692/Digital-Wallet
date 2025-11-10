@@ -1,18 +1,11 @@
 package com.digitalwallet.repository;
 
 import com.digitalwallet.model.User;
-import org.springframework.stereotype.Repository;
-import java.util.*;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-@Repository
-public class UserRepository {
-    private final Map<String, User> users = new HashMap<>();
+import java.util.Optional;
+import java.util.UUID;
 
-    public void save(User user) {
-        users.put(user.getUsername(), user);
-    }
-
-    public User findByUsername(String username) {
-        return users.get(username);
-    }
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByUsername(String username);
 }

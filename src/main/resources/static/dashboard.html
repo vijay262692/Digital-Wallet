@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard | Digital Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+
+    .container {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+      padding: 40px 50px;
+      width: 420px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+      animation: fadeIn 0.6s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    h2 {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    #usernameDisplay {
+      font-size: 18px;
+      opacity: 0.9;
+      margin-bottom: 30px;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: 0.3s;
+      color: white;
+      background: linear-gradient(90deg, #00b4db, #0072ff);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      opacity: 0.9;
+    }
+
+    .logout {
+      background: #dc3545 !important;
+      margin-top: 25px;
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h2>🏦 Digital Wallet</h2>
+  <div id="usernameDisplay"></div>
+
+  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  <button onclick="location.href='view-cards.html'">💳 View Saved Cards</button>
+  <button onclick="location.href='make-payment.html'">💸 Make Payment</button>
+  <button onclick="location.href='transactions.html'">📜 View Transactions</button>
+
+  <button class="logout" onclick="logout()">🚪 Logout</button>
+</div>
+
+<script>
+  const user = localStorage.getItem("loggedInUser");
+  if (!user) location.href = "login.html";
+
+  document.getElementById("usernameDisplay").innerHTML = `👋 Welcome, <b>${user}</b>`;
+
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    location.href = "login.html";
+  }
+</script>
+
+</body>
+</html>

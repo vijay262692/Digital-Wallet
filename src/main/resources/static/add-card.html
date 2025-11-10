@@ -4,193 +4,163 @@
   <meta charset="UTF-8" />
   <title>Add Card | Digital Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
     body {
-      font-family: "Poppins", Arial, sans-serif;
-      background: linear-gradient(135deg, #007bff 0%, #00c6ff 100%);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      font-family: 'Poppins', sans-serif;
       margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
-    .card-container {
-      background: rgba(255, 255, 255, 0.15);
-      backdrop-filter: blur(12px);
-      border-radius: 16px;
-      padding: 30px 40px;
-      width: 380px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-      color: #fff;
-      transition: transform 0.3s ease;
+    /* Navigation Bar */
+    header {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      width: 100%;
+      padding: 14px 24px;
+      display: flex;
+      gap: 18px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
     }
 
-    .card-container:hover {
-      transform: translateY(-4px);
-    }
-
-    h2 {
-      text-align: center;
+    header button {
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 6px;
       font-weight: 600;
-      margin-bottom: 10px;
-      color: #fff;
+      transition: 0.3s;
     }
 
-    #welcome {
+    header button:hover {
+      background: rgba(255,255,255,0.25);
+    }
+
+    /* Card Form Box */
+    .card-box {
+      margin-top: 60px;
+      background: rgba(255,255,255,0.14);
+      backdrop-filter: blur(14px);
+      width: 400px;
+      padding: 28px;
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.28);
       text-align: center;
-      font-size: 14px;
-      margin-bottom: 15px;
-      color: rgba(255, 255, 255, 0.8);
-    }
-
-    label {
-      display: block;
-      margin-top: 12px;
-      font-size: 14px;
-      font-weight: 500;
-      color: #e5e5e5;
     }
 
     input {
       width: 100%;
       padding: 12px;
-      margin-top: 6px;
-      border: none;
+      margin: 10px 0;
       border-radius: 8px;
-      font-size: 15px;
+      border: none;
       outline: none;
-      background: rgba(255, 255, 255, 0.85);
+      font-size: 15px;
+      background: rgba(255,255,255,0.9);
       color: #333;
-      transition: all 0.2s ease-in-out;
     }
 
-    input:focus {
-      background: #fff;
-      box-shadow: 0 0 0 2px #00aaff;
-    }
-
-    button {
-      margin-top: 20px;
+    button.add-btn {
       width: 100%;
       padding: 12px;
+      margin-top: 15px;
       border: none;
       border-radius: 8px;
-      background: linear-gradient(90deg, #00b4db 0%, #0083b0 100%);
-      color: #fff;
-      font-size: 16px;
-      font-weight: 600;
+      background: linear-gradient(90deg, #00b4db, #0072ff);
+      color: white;
+      font-weight: bold;
+      font-size: 15px;
       cursor: pointer;
-      transition: background 0.3s ease, transform 0.2s ease;
+      transition: 0.3s;
     }
 
-    button:hover {
-      background: linear-gradient(90deg, #0083b0 0%, #00b4db 100%);
-      transform: translateY(-2px);
-    }
+    button.add-btn:hover { transform: translateY(-2px); }
 
-    #result {
-      margin-top: 18px;
-      font-size: 14px;
-      text-align: center;
-    }
-
-    .success {
-      color: #b2ffb2;
-    }
-
-    .error {
-      color: #ffb2b2;
-    }
-
-    .footer {
-      margin-top: 12px;
-      text-align: center;
-      font-size: 12px;
-      color: rgba(255, 255, 255, 0.7);
-    }
+    .msg { margin-top: 12px; font-size: 14px; }
+    .success { color: #b4ffb4; }
+    .error { color: #ffb4b4; }
   </style>
 </head>
 <body>
-  <div class="card-container">
-    <h2>💳 Add Your Card</h2>
-    <div id="welcome"></div>
 
-    <form id="cardForm">
-      <label>Card Number</label>
-      <input type="text" id="cardNumber" maxlength="16" placeholder="Enter 16-digit card number" required />
+<header>
+  <button onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+  <button onclick="location.href='view-cards.html'">💳 Cards</button>
+  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  <button onclick="location.href='make-payment.html'">💸 Pay</button>
+  <button onclick="location.href='transactions.html'">📜 Transactions</button>
+  <button onclick="logout()">🚪 Logout</button>
+</header>
 
-      <label>Expiry (MM/YY)</label>
-      <input type="text" id="expiry" maxlength="5" placeholder="MM/YY" required />
+<div class="card-box">
+  <h2>💳 Add New Card</h2>
+  <p id="welcome"></p>
 
-      <label>CVV</label>
-      <input type="password" id="cvv" maxlength="3" placeholder="XXX" required />
+  <input id="pan" maxlength="16" placeholder="Card Number (16 digits)" />
+  <input id="expiry" maxlength="5" placeholder="MM/YY" />
+  <input id="cvv" maxlength="3" placeholder="CVV" type="password" />
 
-      <button type="submit">Add Card</button>
-    </form>
+  <button class="add-btn" onclick="addCard()">Add Card</button>
+  <p id="result" class="msg"></p>
+</div>
 
-    <div id="result"></div>
+<script>
+  const username = localStorage.getItem("loggedInUser");
+  if (!username) location.href = "login.html";
 
-    <div class="footer">
-      Powered by <b>Digital Wallet</b> • Secure Tokenization
-    </div>
-  </div>
+  document.getElementById("welcome").innerHTML = `👋 Hello, <b>${username}</b>`;
 
-  <script>
-    const username = localStorage.getItem("loggedInUser");
-    if (!username) {
-      window.location.href = "login.html";
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    location.href = "login.html";
+  }
+
+  async function addCard() {
+    const pan = document.getElementById("pan").value.trim();
+    const expiry = document.getElementById("expiry").value.trim();
+    const cvv = document.getElementById("cvv").value.trim();
+    const resultDiv = document.getElementById("result");
+
+    if (pan.length !== 16 || expiry.length !== 5 || cvv.length !== 3) {
+      resultDiv.innerHTML = `<span class="error">⚠️ Please enter valid card details.</span>`;
+      return;
     }
 
-    document.getElementById("welcome").innerHTML = `👋 Welcome, <b>${username}</b>`;
+    try {
+      const pubKey = await fetch("/api/wallet/publicKey").then(r => r.text());
+      const asn1 = forge.asn1.fromDer(forge.util.decode64(pubKey));
+      const key = forge.pki.publicKeyFromAsn1(asn1);
+      const encrypted = forge.util.encode64(key.encrypt(`${pan}|${expiry}|${cvv}`, "RSAES-PKCS1-V1_5"));
 
-    async function encryptCardData(publicKeyPem, cardData) {
-      const forgePublicKey = forge.pki.publicKeyFromPem(publicKeyPem);
-      const encrypted = forge.util.encode64(
-        forgePublicKey.encrypt(cardData, "RSAES-PKCS1-V1_5")
-      );
-      return encrypted;
-    }
-
-    document
-      .getElementById("cardForm")
-      .addEventListener("submit", async function (e) {
-        e.preventDefault();
-
-        const pan = document.getElementById("cardNumber").value.trim();
-        const expiry = document.getElementById("expiry").value.trim();
-        const cvv = document.getElementById("cvv").value.trim();
-        const cardData = `${pan}|${expiry}|${cvv}`;
-        const resultDiv = document.getElementById("result");
-        resultDiv.innerHTML = "⏳ Encrypting and sending...";
-
-        try {
-          const pubKeyResp = await fetch("/api/wallet/publicKey");
-          const pubKeyBase64 = await pubKeyResp.text();
-          const derKey = forge.util.decode64(pubKeyBase64);
-          const asn1 = forge.asn1.fromDer(derKey);
-          const publicKeyPem = forge.pki.publicKeyToPem(
-            forge.pki.publicKeyFromAsn1(asn1)
-          );
-
-          const encrypted = await encryptCardData(publicKeyPem, cardData);
-
-          const response = await fetch(`/api/wallet/addCard/${username}`, {
-            method: "POST",
-            headers: { "Content-Type": "text/plain" },
-            body: encrypted,
-          });
-
-          const result = await response.json();
-          if (result.status === "ERROR") {
-            resultDiv.innerHTML = `<p class="error">❌ ${result.message}</p>`;
-          } else {
-            resultDiv.innerHTML = `<p class="success">✅ Card Added Successfully<br><small>${result.maskedPan}</small></p>`;
-          }
-        } catch (err) {
-          resultDiv.innerHTML = `<p class="error">❌ Error: ${err.message}</p>`;
-        }
+      const response = await fetch(`/api/wallet/addCard/${username}`, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: encrypted
       });
-  </script>
+
+      const result = await response.json();
+      if (result.status === "SUCCESS") {
+        resultDiv.innerHTML = `<span class="success">✅ Card Added Successfully!</span>`;
+        setTimeout(() => location.href = "view-cards.html", 1500);
+      } else {
+        resultDiv.innerHTML = `<span class="error">❌ ${result.message}</span>`;
+      }
+    } catch (err) {
+      resultDiv.innerHTML = `<span class="error">⚠️ ${err.message}</span>`;
+    }
+  }
+</script>
+
 </body>
 </html>

@@ -4,66 +4,93 @@
   <meta charset="UTF-8" />
   <title>Register | Digital Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    body { font-family:'Poppins',sans-serif; background:linear-gradient(135deg,#007bff,#00c6ff);
-           display:flex; justify-content:center; align-items:center; height:100vh; color:#fff; margin:0; }
-    .box { background:rgba(255,255,255,0.15); padding:35px; border-radius:18px;
-           backdrop-filter:blur(12px); box-shadow:0 0 20px rgba(0,0,0,0.3); width:360px; text-align:center; }
-    input,button { width:100%; padding:12px; border-radius:10px; border:none; margin-top:10px; font-size:15px; }
-    input { background:rgba(255,255,255,0.9); color:#333; }
-    button { background:#0044cc; color:#fff; font-weight:600; cursor:pointer; }
-    button:hover { background:#0033aa; }
-    #result { margin-top:12px; font-size:14px; }
+    body {
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      color: white;
+    }
+
+    .box {
+      background: rgba(255,255,255,0.14);
+      backdrop-filter: blur(14px);
+      border-radius: 16px;
+      padding: 32px;
+      width: 360px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    }
+
+    input, button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      border: none;
+      font-size: 15px;
+    }
+
+    input { background: rgba(255,255,255,0.9); color: #333; }
+
+    button {
+      background: linear-gradient(90deg, #00b4db, #0072ff);
+      color: white;
+      cursor: pointer;
+      font-weight: bold;
+    }
   </style>
 </head>
+
 <body>
-  <div class="box">
-    <h2>Create Account</h2>
 
-    <input id="username" placeholder="Username" required />
-    <input id="email" placeholder="Email" type="email" required />
-    <input id="password" type="password" placeholder="Password" required />
+<div class="box">
+  <h2>Create Account</h2>
 
-    <button onclick="register()">Register</button>
+  <input id="username" placeholder="Username" />
+  <input id="email" type="email" placeholder="Email" />
+  <input id="password" type="password" placeholder="Password" />
 
-    <div id="result"></div>
-    <p style="margin-top:8px;">Already registered? <a href="login.html" style="color:#fff;">Login</a></p>
-  </div>
+  <button onclick="register()">Register</button>
+
+  <p id="result" style="margin-top:10px;"></p>
+  <p style="margin-top:10px;">Already registered? <a href="login.html">Login</a></p>
+</div>
 
 <script>
   async function register() {
-    const username = document.getElementById("username").value.trim();
-    const email    = document.getElementById("email").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const role     = "USER";
+    const user = username.value.trim();
+    const emailVal = email.value.trim();
+    const pass = password.value.trim();
+    const role = "USER";
 
-    try {
-      // ✅ correct endpoint
-      const keyB64 = await fetch("/api/user/publicKey").then(r => r.text());
-      const der = forge.util.decode64(keyB64);
-      const asn1 = forge.asn1.fromDer(der);
-      const pubKey = forge.pki.publicKeyFromAsn1(asn1);
+    const key = await (await fetch("/api/user/publicKey")).text();
+    const pub = forge.pki.publicKeyFromAsn1(forge.asn1.fromDer(forge.util.decode64(key)));
+    const encrypted = forge.util.encode64(pub.encrypt(`${user}|${emailVal}|${pass}|${role}`, "RSAES-PKCS1-V1_5"));
 
-      // ✅ backend expects username|email|password|role
-      const encrypted = forge.util.encode64(
-        pubKey.encrypt(`${username}|${email}|${password}|${role}`, "RSAES-PKCS1-V1_5")
-      );
+    const res = await fetch("/api/user/register", {
+      method: "POST",
+      headers: { "Content-Type": "text/plain" },
+      body: encrypted
+    });
 
-      const response = await fetch("/api/user/register", {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" }, 
-        body: encrypted
-      });
+    const result = await res.json();
+    const out = document.getElementById("result");
 
-      const result = await response.json();
-      document.getElementById("result").textContent = result.message;
-
-    } catch (err) {
-      document.getElementById("result").textContent = "⚠️ " + err.message;
+    if (result.status === "SUCCESS") {
+      out.textContent = "✅ Registered! Redirecting...";
+      setTimeout(() => location.href = "login.html", 1500);
+    } else {
+      out.textContent = "❌ " + result.message;
     }
   }
 </script>
+
 </body>
 </html>
