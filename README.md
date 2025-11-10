@@ -1,117 +1,136 @@
-# digital-wallet-demo (single-module)
+# 💳 Digital Wallet Demo
+
+A secure digital wallet system built with **Spring Boot**, supporting **RSA Encryption**, **Tokenized Cards**, **Wallet Balances**, and **Transaction Logs** stored in **PostgreSQL**.
+
+This project demonstrates how real card networks (Visa VTS / Mastercard MDES) tokenize card data — implemented with a mock routing engine.
+
+---
+
+## 🚀 Features
+
+| Feature | Description |
+|-------|-------------|
+| 🔐 **Secure Login & Register** | Credentials encrypted via RSA (Forge.js + Java) |
+| 💳 **Add Card (Tokenization)** | PAN is never stored — instead, network token is saved |
+| 👁️ **View Saved Cards** | Cards are masked + status-based actions allowed |
+| 💸 **Make Payments** | Payments processed using stored tokens |
+| 📜 **Transaction History** | All payments stored in PostgreSQL |
+| 👤 **User Session** | Browser localStorage-based login persistence |
+| 🧱 **PostgreSQL + JPA** | Persistent relational storage for all data |
+
+---
+
+## 🏛️ System Architecture
+
+Browser (HTML + JS)
+↓ RSA Encrypt (Forge.js)
+Spring Boot API
+↓ Decrypt (RSA Private Key)
+Tokenization Router (Mock VTS / MDES)
+↓
+PostgreSQL (users, wallets, cards, transactions)
 
 
-Spring Boot • RSA Encryption • Tokenization • Payments
-
-A secure Digital Wallet built with Spring Boot that encrypts card data using RSA keys, tokenizes it via mock Visa (VTS) or Mastercard (MDES) services, and allows payments using stored tokens.
 
 
-⚙️ Quick Setup
-1️⃣ Clone the repo
+---
+
+## 🗂️ Database Tables
+
+| Table | Purpose |
+|-------|---------|
+| `users` | Stores registered user accounts |
+| `wallets` | One wallet per user, tracks balance |
+| `cards` | Tokenized card entries (masked PAN + token) |
+| `transactions` | Payments processed via tokenized cards |
+
+---
+
+## ⚙️ Setup Instructions
+
+### 1️⃣ Clone Repo
+```bash
 git clone https://github.com/vijay262692/Digital-Wallet.git
+cd Digital-Wallet
 
-2️⃣ Build & Run
+
+
+
+2️⃣ Configure Database (application.properties)
+spring.datasource.url=jdbc:postgresql://localhost:5432/walletdb
+spring.datasource.username=postgres
+spring.datasource.password=root
+spring.jpa.hibernate.ddl-auto=create
+spring.jpa.show-sql=true
+
+3️⃣ Build & Run
 mvn clean install
 mvn spring-boot:run
 
 
-Runs on → http://localhost:8080
+App Runs On → http://localhost:8080
 
-🧠 Core Features
+🌐 Available Pages (UI)
+Page	File	Description
+Login	login.html	User login (RSA encrypted)
+Register	register.html	Sign up new user
+Dashboard	dashboard.html	App navigation home
+Add Card	add-card.html	Encrypts PAN + Tokenizes
+View Cards	view-cards.html	Displays tokenized cards
+Make Payment	make-payment.html	Pay using token
+Transactions	transactions.html	View transaction history
 
-✅ RSA encryption of card data (Forge.js + Java)
-✅ Tokenization via mock VTS / MDES
-✅ Add, view, and pay using tokenized cards
-✅ Transaction history
-✅ Simple user flow (admin & users)
-✅ Modular services & repositories
+All UI files are served from:
 
-🔗 API Endpoints
+src/main/resources/static/
+
+🔑 REST API Reference
 
 Action	Method	Endpoint
+
 Get Public Key	GET	/api/wallet/publicKey
-Add Card	POST	/api/wallet/addCard
-View Cards	GET	/api/wallet/cards
+Register User	POST	/api/user/register
+Login User	POST	/api/user/login
+Add Card	POST	/api/wallet/addCard/{username}
+List Cards	GET	/api/wallet/cards/{username}
 Make Payment	POST	/api/wallet/pay
-View Transactions	GET	/api/wallet/transactions
+List Transactions	GET	/api/wallet/transactions/{username}
 
-Sample /pay request:
 
+Sample Payment Request:
 {
-  "token": "VISA-TOKEN-26eda081",
-  "amount": "249.50",
+  "username": "vijay",
+  "token": "VISA-TOKEN-82kdn1x",
+  "amount": 249.50,
   "merchant": "Amazon"
 }
 
-🖥️ Frontend Pages
-Page	File	Description
 
-Add Card	add-card.html -->	Encrypts card info using RSA
-View Cards	view-cards.html --> 	Displays masked cards
-Make Payment	make-payment.html --> 	Pay using stored token
-Transactions	transactions.html --> 	View transaction logs
-
-👉 Place these in src/main/resources/static/ to serve via browser.
-
-🔐 Encryption Flow
-Frontend (Forge.js)
-     ↓ RSA Encrypt
-Backend (Spring Boot)
-     ↓ Decrypt → Tokenize (VTS/MDES)
-     ↓ Save Masked Card + Token
-
-
-Example:
-
-Input Card	Route	Token
-5123…	MDES	MC-TOKEN-xxxxxx
-4123…	VTS	VISA-TOKEN-xxxxxx
-🧾 Example Response
-
-Payment Response:
-
-{
-  "status": "SUCCESS",
-  "message": "[VTS] Payment of ₹111.0 processed at Zomato via token VISA-TOKEN-26eda081",
-  "merchant": "Zomato",
-  "amount": 111.0
-}
 
 🧩 Tech Stack
 
-Java 17, Spring Boot 2.7
-
-RSA Encryption (Java Cipher + Forge.js)
-
-HTML / JS Frontend
-
-In-Memory Storage (Card + Transaction Repository)
-
-Maven Build
+Layer	Technology
+Backend	Java 17, Spring Boot 2.7, Spring Data JPA
+Encryption	RSA (Java Crypto + Forge.js)
+Frontend	HTML5, CSS3, Vanilla JS, Axios
+Database	PostgreSQL
+Build Tool	Maven
 
 
 
-🚀 Future Enhancements (Roadmap)
+🛣️ Roadmap
+
+✅ PostgreSQL DB Persistence
+
+✅ Status update on Cards (ACTIVE/SUSPENDED/TERMINATED)
+
+🔥 JWT Authentication + Secure Sessions
 
 
-
-✅ Move to H2/MySQL DB (instead of in-memory)
-
-✅ Add card suspend/terminate/activate actions
-
-🔥 Role-Based Access + JWT Authentication
-
-📧 Email OTP for login & card linking
-
-🔄 Token Refresh Lifecycle Simulation
-
-🧠 Add Fraud Check Simulator (Velocity + Risk Score)
-
-
-
-🧑‍💻 Author
+👤 Author
 
 BaluRaju P V
+
 MIT License © 2025
 
 Notes:
