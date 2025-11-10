@@ -2,146 +2,117 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Transaction History - Digital Wallet</title>
+  <title>Transaction History | Digital Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
-    /* 🌈 Basic Styling */
     body {
-      font-family: 'Inter', Arial, sans-serif;
-      background: #f8fafc;
+      background: linear-gradient(135deg, #007bff, #00c6ff);
+      font-family: 'Poppins', sans-serif;
       margin: 0;
-      padding: 0;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
     }
 
+    /* Navigation Bar */
     header {
-      background: linear-gradient(90deg, #007bff, #0044cc);
-      color: white;
-      text-align: center;
-      padding: 20px;
-      font-size: 1.6rem;
-      font-weight: bold;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-      letter-spacing: 0.5px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      width: 100%;
+      padding: 15px 25px;
+      display: flex;
+      gap: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+      position: sticky;
+      top: 0;
     }
+    header button {
+      background: transparent;
+      border: none;
+      color: white;
+      cursor: pointer;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-weight: 600;
+      transition: 0.3s;
+    }
+    header button:hover { background: rgba(255,255,255,0.25); }
 
     .container {
-      max-width: 1000px;
-      margin: 40px auto;
-      background: #fff;
-      border-radius: 10px;
-      padding: 20px 25px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      background: rgba(255,255,255,0.14);
+      backdrop-filter: blur(12px);
+      width: 90%;
+      max-width: 900px;
+      margin-top: 40px;
+      padding: 25px;
+      border-radius: 14px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
     }
 
-    h2 {
-      text-align: left;
-      color: #333;
-      margin-bottom: 15px;
-      border-left: 4px solid #007bff;
-      padding-left: 10px;
-    }
+    h2 { margin-bottom: 10px; text-align: center; }
 
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 15px;
     }
-
     th, td {
-      text-align: left;
-      padding: 12px 10px;
-      border-bottom: 1px solid #f0f0f0;
-    }
-
-    th {
-      background: #f5f8fb;
-      color: #333;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-
-    tr:hover {
-      background: #f0f7ff;
-      transition: 0.2s;
-    }
-
-    .status-success {
-      color: #16a34a;
-      font-weight: bold;
-    }
-
-    .status-error {
-      color: #dc2626;
-      font-weight: bold;
-    }
-
-    .provider-badge {
-      padding: 4px 10px;
-      border-radius: 5px;
-      font-size: 0.9em;
-      font-weight: 600;
-      display: inline-block;
-    }
-
-    .MDES {
-      background-color: #e6f0ff;
-      color: #0044cc;
-    }
-
-    .VTS {
-      background-color: #fff4e0;
-      color: #ff8c00;
-    }
-
-    .amount {
-      font-weight: bold;
-      text-align: right;
-    }
-
-    footer {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.2);
       text-align: center;
-      color: #999;
-      font-size: 0.9em;
-      margin-top: 30px;
-      padding-bottom: 20px;
     }
 
-    /* Pagination controls */
+    .success { color: #baffc9; font-weight: 600; }
+    .failed { color: #ffb3b3; font-weight: 600; }
+
+    .provider-tag {
+      padding: 4px 10px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.25);
+      display: inline-block;
+      font-weight: 600;
+      font-size: 0.9em;
+    }
+
     .pagination {
       display: flex;
       justify-content: center;
       align-items: center;
-      margin-top: 20px;
-      gap: 10px;
+      margin-top: 15px;
+      gap: 12px;
     }
-
     .pagination button {
-      padding: 8px 12px;
+      padding: 8px 14px;
       border: none;
-      border-radius: 5px;
-      background: #007bff;
+      border-radius: 6px;
+      background: #0044cc;
       color: white;
       cursor: pointer;
-      transition: 0.2s;
+      transition: 0.3s;
     }
-
-    .pagination button:hover {
-      background: #0056b3;
-    }
-
     .pagination button:disabled {
-      background: #ccc;
+      background: #666;
       cursor: not-allowed;
     }
   </style>
 </head>
 <body>
 
-<header>💳 Digital Wallet – Transaction History</header>
+<header>
+  <button onclick="location.href='dashboard.html'">🏠 Dashboard</button>
+  <button onclick="location.href='view-cards.html'">💳 Cards</button>
+  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  <button onclick="location.href='make-payment.html'">💸 Pay</button>
+  <button onclick="logout()">🚪 Logout</button>
+</header>
 
 <div class="container">
-  <h2>Recent Transactions</h2>
+  <h2>📜 Transaction History</h2>
 
-  <table id="txnTable">
+  <table>
     <thead>
       <tr>
         <th>Date</th>
@@ -149,11 +120,11 @@
         <th>Card</th>
         <th>Provider</th>
         <th>Status</th>
-        <th class="amount">Amount (₹)</th>
+        <th>Amount (₹)</th>
       </tr>
     </thead>
-    <tbody>
-      <tr><td colspan="6" style="text-align:center; color:#777;">Loading transactions...</td></tr>
+    <tbody id="txnBody">
+      <tr><td colspan="6">Loading...</td></tr>
     </tbody>
   </table>
 
@@ -164,86 +135,66 @@
   </div>
 </div>
 
-<footer>© 2025 Digital Wallet | Secure Tokenized Payments</footer>
-
 <script>
-  const apiUrl = "/api/wallet/transactions";
-  const rowsPerPage = 5;
+  const username = localStorage.getItem("loggedInUser");
+  if (!username) location.href = "login.html";
+
+  const rowsPerPage = 6;
   let transactions = [];
   let currentPage = 1;
 
   async function loadTransactions() {
-    try {
-      const res = await fetch(apiUrl);
-      if (!res.ok) throw new Error("Server error " + res.status);
-      transactions = await res.json();
-      renderTable();
-    } catch (err) {
-      console.error("Failed to load transactions:", err);
-      const tbody = document.querySelector("#txnTable tbody");
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">⚠️ Error loading data</td></tr>`;
-    }
+    const res = await fetch(`/api/wallet/transactions/${username}`);
+    transactions = await res.json();
+    renderTable();
   }
 
   function renderTable() {
-    const tbody = document.querySelector("#txnTable tbody");
+    const tbody = document.getElementById("txnBody");
     tbody.innerHTML = "";
 
     if (transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#777;">No transactions yet.</td></tr>`;
-      document.getElementById("pageInfo").innerText = "";
+      tbody.innerHTML = `<tr><td colspan="6">No transactions found.</td></tr>`;
       return;
     }
 
     const start = (currentPage - 1) * rowsPerPage;
     const end = start + rowsPerPage;
-    const pageTxns = transactions.slice(start, end);
+    const page = transactions.slice(start, end);
 
-    for (const txn of pageTxns) {
-      const statusClass = txn.status === "SUCCESS" ? "status-success" : "status-error";
-      const providerClass = txn.provider ? txn.provider : "unknown";
+    page.forEach(tx => {
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${txn.timestamp || "-"}</td>
-        <td>${txn.merchant || "-"}</td>
-        <td>${txn.card || "**** **** ****"}</td>
-        <td><span class="provider-badge ${providerClass}">${txn.provider || "-"}</span></td>
-        <td class="${statusClass}">${txn.status || "-"}</td>
-        <td class="amount">${txn.amount ? parseFloat(txn.amount).toFixed(2) : "0.00"}</td>
+        <td>${tx.timestamp || "-"}</td>
+        <td>${tx.merchant || "-"}</td>
+        <td>${tx.maskedPan || "**** **** ****"}</td>
+        <td><span class="provider-tag">${tx.provider || "-"}</span></td>
+        <td class="${tx.status === 'SUCCESS' ? 'success' : 'failed'}">${tx.status}</td>
+        <td><b>${parseFloat(tx.amount).toFixed(2)}</b></td>
       `;
       tbody.appendChild(tr);
-    }
+    });
 
     updatePagination();
   }
 
   function updatePagination() {
     const totalPages = Math.ceil(transactions.length / rowsPerPage);
-    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages || 1}`;
+    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
     document.getElementById("prevBtn").disabled = currentPage === 1;
     document.getElementById("nextBtn").disabled = currentPage === totalPages;
   }
 
-  document.getElementById("prevBtn").addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTable();
-    }
-  });
+  document.getElementById("prevBtn").onclick = () => { currentPage--; renderTable(); };
+  document.getElementById("nextBtn").onclick = () => { currentPage++; renderTable(); };
 
-  document.getElementById("nextBtn").addEventListener("click", () => {
-    const totalPages = Math.ceil(transactions.length / rowsPerPage);
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderTable();
-    }
-  });
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    location.href = "login.html";
+  }
 
-  // 🔁 Auto-refresh every 5 seconds
-  setInterval(loadTransactions, 5000);
-
-  // 🚀 Initial load
   loadTransactions();
+  setInterval(loadTransactions, 5000);
 </script>
 
 </body>

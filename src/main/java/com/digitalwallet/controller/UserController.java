@@ -9,7 +9,8 @@ import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
-import java.util.*; 
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/user")
@@ -30,7 +31,7 @@ public class UserController {
     }
 
     /**
-     * ✅ Register a new user (Admin-only in real scenario)
+     * ✅ Register a new user
      */
     @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
     public Map<String, Object> register(@RequestBody String encryptedBase64) {
@@ -38,6 +39,7 @@ public class UserController {
         try {
             KeyPair kp = keyManager.getKeyPair();
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
+
             // Expected format: username|email|password|role
             String[] parts = plain.split("\\|");
             String username = parts[0];
@@ -45,7 +47,8 @@ public class UserController {
             String password = parts[2];
             String role = parts.length > 3 ? parts[3] : "USER";
 
-            if (userRepository.findByUsername(username) != null) {
+            // ✅ Updated check using JPA Optional
+            if (userRepository.findByUsername(username).isPresent()) {
                 response.put("status", "ERROR");
                 response.put("message", "Username already exists!");
                 return response;
@@ -73,12 +76,14 @@ public class UserController {
         try {
             KeyPair kp = keyManager.getKeyPair();
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
-            // Expected: username|password
+
+            // Expected format: username|password
             String[] parts = plain.split("\\|");
             String username = parts[0];
             String password = parts[1];
 
-            User user = userRepository.findByUsername(username);
+            // ✅ Get user from DB using Optional
+            User user = userRepository.findByUsername(username).orElse(null);
 
             if (user == null) {
                 response.put("status", "ERROR");

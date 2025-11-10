@@ -1,24 +1,11 @@
 package com.digitalwallet.repository;
 
-import org.springframework.stereotype.Repository;
+import com.digitalwallet.model.TransactionRecord;
+import org.springframework.data.jpa.repository.JpaRepository;
+import java.util.List;
+import java.util.UUID;
 
-import java.util.*;
+public interface TransactionRepository extends JpaRepository<TransactionRecord, UUID> {
 
-@Repository
-public class TransactionRepository {
-
-    // 🧾 Simple in-memory transaction list
-    private final List<Map<String, Object>> transactions = new ArrayList<>();
-
-    // 💾 Save new transaction
-    public void save(Map<String, Object> txn) {
-        transactions.add(txn);
-    } 
-
-    // 🔍 Retrieve all transactions
-    public List<Map<String, Object>> findAll() {
-        return new ArrayList<>(transactions);
-    }
-    
-    
+    List<TransactionRecord> findByUser_Username(String username);
 }
