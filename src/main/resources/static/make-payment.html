@@ -119,18 +119,23 @@
   if (!username) location.href = "login.html";
 
   // Load user's cards
-  async function loadCards() {
-    try {
-      const res = await axios.get(`/api/wallet/cards/${username}`);
-      const cards = res.data;
-      const select = document.getElementById("tokenSelect");
-      select.innerHTML = cards.map(card =>
-        `<option value="${card.token}">${card.maskedPan} (${card.provider})</option>`
-      ).join("");
-    } catch {
-      document.getElementById("result").innerHTML = `<p class="error">⚠️ Unable to load cards.</p>`;
-    }
+ async function loadCards() {
+  try {
+    const res = await axios.get(`/api/wallet/cards/${username}`);
+    const cards = res.data;
+    const select = document.getElementById("tokenSelect");
+
+    // Show ONLY the token
+    select.innerHTML = cards.map(card =>
+      `<option value="${card.token}">${card.token}</option>`
+    ).join("");
+
+  } catch {
+    document.getElementById("result").innerHTML =
+      `<p class="error">⚠️ Unable to load cards.</p>`;
   }
+}
+
 
   // Make Payment
   async function makePayment() {
