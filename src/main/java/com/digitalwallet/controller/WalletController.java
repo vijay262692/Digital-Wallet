@@ -94,6 +94,69 @@ public class WalletController {
     public List<Card> getUserCards(@PathVariable String username) {
         return cardRepository.findByUserUsername(username);
     }
+    
+    
+    
+    @PostMapping(value = "/cardStatus", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public Map<String, Object> updateCardStatus(@RequestBody Map<String, String> request) {
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        try {
+            String username = request.get("username");
+            String token = request.get("token");
+            String newStatus = request.get("status");
+
+            if (username == null || token == null || newStatus == null) {
+                response.put("status", "ERROR");
+                response.put("message", "Missing required fields.");
+                return response;
+            }
+
+            User user = userRepository.findByUsername(username).orElse(null);
+            if (user == null) {
+                response.put("status", "ERROR");
+                response.put("message", "User not found: " + username);
+                return response;
+            }
+
+            Card card = cardRepository.findByToken(token).orElse(null);
+            if (card == null) {
+                response.put("status", "ERROR");
+                response.put("message", "Card not found for token: " + token);
+                return response;
+            }
+
+            // Only the owner of the card can update it
+            if (!card.getUser().getUsername().equals(username)) {
+                response.put("status", "ERROR");
+                response.put("message", "Unauthorized: Card does not belong to user.");
+                return response;
+            }
+
+            // Validate status
+            if (!Arrays.asList("ACTIVE", "SUSPENDED", "TERMINATED").contains(newStatus.toUpperCase())) {
+                response.put("status", "ERROR");
+                response.put("message", "Invalid status. Allowed: ACTIVE, SUSPENDED, TERMINATED");
+                return response;
+            }
+
+            // Update the status
+            card.setStatus(newStatus.toUpperCase());
+            cardRepository.save(card);
+
+            response.put("status", "SUCCESS");
+            response.put("message", "Card status updated to " + newStatus);
+            response.put("token", token);
+
+            return response;
+
+        } catch (Exception e) {
+            response.put("status", "ERROR");
+            response.put("message", "Failed: " + e.getMessage());
+            return response;
+        }
+    }
+
 
     @PostMapping(value = "/pay", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> makePayment(@RequestBody Map<String, Object> request) {
@@ -116,6 +179,13 @@ public class WalletController {
             if (card == null) {
                 response.put("status", "ERROR");
                 response.put("message", "Card not found for token: " + token);
+                return response;
+            }
+            
+            
+            if (!"ACTIVE".equalsIgnoreCase(card.getStatus())) {
+                response.put("status", "ERROR");
+                response.put("message", "Card is " + card.getStatus() + ". Payment cannot be processed.");
                 return response;
             }
 
@@ -171,4 +241,6 @@ public class WalletController {
         return list;
 
     }
+    
+    
 }
