@@ -18,6 +18,13 @@ public class User {
 
     @Column(nullable = false)
     private String password;
+    
+    @Column(name = "activation_token")
+    private String activationToken;
+
+    @Column(name = "activated")
+    private Boolean activated = false;
+
 
     private String role;
     private boolean active = true;
@@ -49,4 +56,11 @@ public class User {
 
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
+    
+    public String getActivationToken() { return activationToken; }
+    public void setActivationToken(String activationToken) { this.activationToken = activationToken; }
+
+    public Boolean getActivated() { return activated; }
+    public void setActivated(Boolean activated) { this.activated = activated; }
+
 }

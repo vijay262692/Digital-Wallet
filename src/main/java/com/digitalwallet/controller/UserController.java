@@ -3,6 +3,7 @@ package com.digitalwallet.controller;
 import com.digitalwallet.common.CryptoUtil;
 import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.model.User;
+import com.digitalwallet.service.EmailService;
 import com.digitalwallet.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -11,6 +12,9 @@ import org.springframework.web.bind.annotation.*;
 import java.security.KeyPair;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.UUID;
+import java.util.Optional;
+
 
 @RestController
 @RequestMapping("/api/user")
@@ -21,6 +25,10 @@ public class UserController {
 
     @Autowired
     private UserRepository userRepository;
+    
+    
+    @Autowired
+    private EmailService emailService;
 
     /**
      * ✅ Returns current RSA public key for encrypting login/register credentials
@@ -33,6 +41,35 @@ public class UserController {
     /**
      * ✅ Register a new user
      */
+	/*
+	 * @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
+	 * public Map<String, Object> register(@RequestBody String encryptedBase64) {
+	 * Map<String, Object> response = new LinkedHashMap<>(); try { KeyPair kp =
+	 * keyManager.getKeyPair(); String plain =
+	 * CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
+	 * 
+	 * // Expected format: username|email|password|role String[] parts =
+	 * plain.split("\\|"); String username = parts[0]; String email = parts[1];
+	 * String password = parts[2]; String role = parts.length > 3 ? parts[3] :
+	 * "USER";
+	 * 
+	 * // ✅ Updated check using JPA Optional if
+	 * (userRepository.findByUsername(username).isPresent()) {
+	 * response.put("status", "ERROR"); response.put("message",
+	 * "Username already exists!"); return response; }
+	 * 
+	 * User user = new User(username, email, password, role);
+	 * userRepository.save(user);
+	 * 
+	 * response.put("status", "SUCCESS"); response.put("message",
+	 * "User registered successfully!"); return response; } catch (Exception e) {
+	 * response.put("status", "ERROR"); response.put("message",
+	 * "Registration failed: " + e.getMessage()); return response; } }
+	 */
+
+    
+   
+
     @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
     public Map<String, Object> register(@RequestBody String encryptedBase64) {
         Map<String, Object> response = new LinkedHashMap<>();
@@ -40,32 +77,58 @@ public class UserController {
             KeyPair kp = keyManager.getKeyPair();
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
 
-            // Expected format: username|email|password|role
             String[] parts = plain.split("\\|");
             String username = parts[0];
             String email = parts[1];
             String password = parts[2];
             String role = parts.length > 3 ? parts[3] : "USER";
 
-            // ✅ Updated check using JPA Optional
             if (userRepository.findByUsername(username).isPresent()) {
                 response.put("status", "ERROR");
                 response.put("message", "Username already exists!");
                 return response;
             }
 
+            // Generate activation token
+            String token = UUID.randomUUID().toString();
+
             User user = new User(username, email, password, role);
+            user.setActivated(false);
+            user.setActivationToken(token);
             userRepository.save(user);
 
+            // Send email
+            emailService.sendActivationMail(email, token);
+
             response.put("status", "SUCCESS");
-            response.put("message", "User registered successfully!");
+            response.put("message", "User registered. Check email to activate.");
             return response;
+
         } catch (Exception e) {
             response.put("status", "ERROR");
             response.put("message", "Registration failed: " + e.getMessage());
             return response;
         }
     }
+    
+    
+    @GetMapping("/activate")
+    public String activateAccount(@RequestParam("token") String token) {
+        Optional<User> optional = userRepository.findByActivationToken(token);
+
+        if (optional.isEmpty()) {
+            return "Invalid or expired activation link!";
+        }
+
+        User user = optional.get();
+        user.setActivated(true);
+        user.setActivationToken(null);
+
+        userRepository.save(user);
+
+        return "Account activated successfully! You can now login.";
+    }
+
 
     /**
      * ✅ User login
@@ -91,11 +154,17 @@ public class UserController {
                 return response;
             }
 
-            if (!user.isActive()) {
+			/*
+			 * if (!user.isActive()) { response.put("status", "ERROR");
+			 * response.put("message", "Account not active!"); return response; }
+			 */
+            
+            if (!user.getActivated()) {
                 response.put("status", "ERROR");
-                response.put("message", "Account not active!");
+                response.put("message", "Account not activated! Check your email.");
                 return response;
             }
+
 
             if (!user.getPassword().equals(password)) {
                 response.put("status", "ERROR");
