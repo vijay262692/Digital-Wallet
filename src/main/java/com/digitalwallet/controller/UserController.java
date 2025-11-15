@@ -7,6 +7,7 @@ import com.digitalwallet.service.EmailService;
 import com.digitalwallet.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
@@ -112,12 +113,29 @@ public class UserController {
     }
     
     
+	/*
+	 * @GetMapping("/activate") public String activateAccount(@RequestParam("token")
+	 * String token) { Optional<User> optional =
+	 * userRepository.findByActivationToken(token);
+	 * 
+	 * if (optional.isEmpty()) { return "Invalid or expired activation link!"; }
+	 * 
+	 * User user = optional.get(); user.setActivated(true);
+	 * user.setActivationToken(null);
+	 * 
+	 * userRepository.save(user);
+	 * 
+	 * return "Account activated successfully! You can now login."; }
+	 */
+    
     @GetMapping("/activate")
-    public String activateAccount(@RequestParam("token") String token) {
+    public RedirectView activateAccount(@RequestParam("token") String token) {
+
         Optional<User> optional = userRepository.findByActivationToken(token);
 
-        if (optional.isEmpty()) {
-            return "Invalid or expired activation link!";
+        // Invalid token
+        if (!optional.isPresent()) {
+            return new RedirectView("/activation-failed.html");
         }
 
         User user = optional.get();
@@ -126,8 +144,10 @@ public class UserController {
 
         userRepository.save(user);
 
-        return "Account activated successfully! You can now login.";
+        // Redirect to success page with username (displayed using JS)
+        return new RedirectView("/activation-success.html?username=" + user.getUsername());
     }
+
 
 
     /**
