@@ -1,6 +1,7 @@
 package com.digitalwallet.model;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "users")
@@ -24,6 +25,27 @@ public class User {
 
     @Column(name = "activated")
     private Boolean activated = false;
+    
+  
+    public LocalDateTime getOtpExpiry() {
+		return otpExpiry;
+	}
+
+	public void setOtpExpiry(LocalDateTime otpExpiry) {
+		this.otpExpiry = otpExpiry;
+	}
+
+	public void setOtpCode(String otpCode) {
+		this.otpCode = otpCode;
+	}
+
+	@Column(name = "otp_code")
+    private String otpCode;
+
+    @Column(name = "otp_expiry")
+    private LocalDateTime otpExpiry;
+
+    
 
 
     private String role;
@@ -62,5 +84,8 @@ public class User {
 
     public Boolean getActivated() { return activated; }
     public void setActivated(Boolean activated) { this.activated = activated; }
+
+    public String getOtpCode() { return otpCode; }
+
 
 }

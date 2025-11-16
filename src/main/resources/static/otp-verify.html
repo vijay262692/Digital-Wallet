@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Verify OTP | Digital Wallet</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #0072ff, #00c6ff);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .box {
+      background: rgba(255,255,255,0.12);
+      padding: 35px;
+      border-radius: 16px;
+      width: 360px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 26px;
+      margin-bottom: 10px;
+    }
+
+    p {
+      font-size: 14px;
+      opacity: 0.9;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 18px;
+      text-align: center;
+      outline: none;
+      background: rgba(255,255,255,0.95);
+      color: #333;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      background: linear-gradient(90deg, #00b4db, #0072ff);
+      color: white;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+    }
+
+    .note {
+      font-size: 13px;
+      margin-top: 12px;
+      color: #ffe6e6;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="box">
+  <h2>🔐 OTP Verification</h2>
+  <p>Please enter the 6-digit OTP sent to your email.</p>
+
+  <form action="/api/user/verify-otp" method="POST">
+
+    <input type="hidden" id="username" name="username">
+
+    <input 
+      type="text" 
+      name="otp" 
+      maxlength="6" 
+      placeholder="Enter OTP"
+      required
+    >
+
+    <button type="submit">Verify OTP</button>
+  </form>
+
+  <div class="note">Didn’t receive OTP? Check your spam folder.</div>
+</div>
+
+<script>
+  // Auto-fill username from URL param
+  const params = new URLSearchParams(window.location.search);
+  document.getElementById("username").value = params.get("username");
+</script>
+
+</body>
+</html>
