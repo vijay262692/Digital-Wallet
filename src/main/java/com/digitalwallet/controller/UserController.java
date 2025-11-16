@@ -11,10 +11,13 @@ import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.KeyPair;
+import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
+import java.util.Random;
+
 
 
 @RestController
@@ -128,26 +131,83 @@ public class UserController {
 	 * return "Account activated successfully! You can now login."; }
 	 */
     
+	/*
+	 * @GetMapping("/activate") public RedirectView
+	 * activateAccount(@RequestParam("token") String token) {
+	 * 
+	 * Optional<User> optional = userRepository.findByActivationToken(token);
+	 * 
+	 * // Invalid token if (!optional.isPresent()) { return new
+	 * RedirectView("/activation-failed.html"); }
+	 * 
+	 * User user = optional.get(); user.setActivated(true);
+	 * user.setActivationToken(null);
+	 * 
+	 * userRepository.save(user);
+	 * 
+	 * // Redirect to success page with username (displayed using JS) return new
+	 * RedirectView("/activation-success.html?username=" + user.getUsername()); }
+	 */
+    
+    
     @GetMapping("/activate")
-    public RedirectView activateAccount(@RequestParam("token") String token) {
+    public RedirectView sendOtp(@RequestParam("token") String token) {
 
         Optional<User> optional = userRepository.findByActivationToken(token);
 
-        // Invalid token
-        if (!optional.isPresent()) {
+        if (optional.isEmpty()) {
             return new RedirectView("/activation-failed.html");
         }
 
         User user = optional.get();
+
+        // Generate OTP
+        String otp = String.valueOf(new Random().nextInt(900000) + 100000);
+
+        user.setOtpCode(otp);
+        user.setOtpExpiry(LocalDateTime.now().plusMinutes(5)); // OTP valid for 5 minutes
+
+        userRepository.save(user);
+
+        // Send OTP by email
+        emailService.sendEmail(
+                user.getEmail(),
+                "Your Account Activation OTP",
+                "Hello " + user.getUsername() + ",\n\nYour OTP is: " + otp +
+                "\n\nValid for 5 minutes."
+        );
+
+        // After clicking email link → redirect to OTP page
+        return new RedirectView("/otp-verify.html?username=" + user.getUsername());
+
+    }
+
+    
+    @PostMapping("/verify-otp")
+    public RedirectView verifyOtp(@RequestParam("username") String username,
+                                  @RequestParam("otp") String otp) {
+
+        User user = userRepository.findByUsername(username).orElse(null);
+        if (user == null) return new RedirectView("/activation-failed.html");
+
+        if (user.getOtpExpiry() == null || user.getOtpExpiry().isBefore(LocalDateTime.now())) {
+            return new RedirectView("/otp-expired.html");
+        }
+
+        if (!otp.equals(user.getOtpCode())) {
+            return new RedirectView("/otp-invalid.html");
+        }
+
+        // Success
         user.setActivated(true);
+        user.setOtpCode(null);
+        user.setOtpExpiry(null);
         user.setActivationToken(null);
 
         userRepository.save(user);
 
-        // Redirect to success page with username (displayed using JS)
-        return new RedirectView("/activation-success.html?username=" + user.getUsername());
+        return new RedirectView("/activation-success.html?username=" + username);
     }
-
 
 
     /**
