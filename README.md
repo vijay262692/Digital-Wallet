@@ -1,103 +1,107 @@
-# 💳 Digital Wallet Demo
+# Digital Wallet Demo
 
-A secure digital wallet system built with **Spring Boot**, supporting **RSA Encryption**, **Tokenized Cards**, **Wallet Balances**, and **Transaction Logs** stored in **PostgreSQL**.
+A secure digital wallet demo built with Spring Boot that demonstrates RSA encryption for client → server communication, tokenized cards (mock Visa/ Mastercard tokenization), wallet balances, and transaction logs persisted to PostgreSQL. This repository is intended as an educational demo — do not use in production without a full security review.
 
-This project demonstrates how real card networks (Visa VTS / Mastercard MDES) tokenize card data — implemented with a mock routing engine.
-
----
-
-## 🚀 Features
-
-| Feature | Description |
-|-------|-------------|
-| 🔐 **Secure Login & Register** | Credentials encrypted via RSA (Forge.js + Java) |
-| 💳 **Add Card (Tokenization)** | PAN is never stored — instead, network token is saved |
-| 👁️ **View Saved Cards** | Cards are masked + status-based actions allowed |
-| 💸 **Make Payments** | Payments processed using stored tokens |
-| 📜 **Transaction History** | All payments stored in PostgreSQL |
-| 👤 **User Session** | Browser localStorage-based login persistence |
-| 🧱 **PostgreSQL + JPA** | Persistent relational storage for all data |
+Table of contents
+- Overview
+- Features
+- Architecture
+- Database model
+- Setup & run
+- REST API reference
+- MailService (new)
+- Tech stack
+- Roadmap
+- Author & license
+- Security notes
 
 ---
 
-## 🏛️ System Architecture
+## Overview
 
-Browser (HTML + JS)
-↓ RSA Encrypt (Forge.js)
-Spring Boot API
-↓ Decrypt (RSA Private Key)
-Tokenization Router (Mock VTS / MDES)
+This project shows how a browser-based client can securely send credentials or PAN (Primary Account Number) to a backend using RSA (client-side Forge.js encryption + server-side Java decryption). Card PANs are never persisted — the application simulates a tokenization router (VTS/MDES) and stores only masked PANs and network tokens.
+
+---
+
+## Features
+
+- Secure login and registration using RSA encryption for transport
+- Tokenized cards: PAN is exchanged for a network token, PAN is not stored
+- Masked card display and card lifecycle status (ACTIVE / SUSPENDED / TERMINATED)
+- Wallet per user with balance tracking
+- Payments using stored tokens and transaction logging
+- Browser localStorage-based lightweight session persistence (demo)
+- PostgreSQL persistence via Spring Data JPA
+
+---
+
+## System Architecture
+
+Browser (HTML + JS with Forge.js)
+↓ (RSA-encrypted payload)
+Spring Boot API (RSA private key decrypt)
+↓
+Mock Tokenization Router (VTS / MDES)
 ↓
 PostgreSQL (users, wallets, cards, transactions)
 
-
-
-
----
-
-## 🗂️ Database Tables
-
-| Table | Purpose |
-|-------|---------|
-| `users` | Stores registered user accounts |
-| `wallets` | One wallet per user, tracks balance |
-| `cards` | Tokenized card entries (masked PAN + token) |
-| `transactions` | Payments processed via tokenized cards |
+All static UI pages are served from src/main/resources/static.
 
 ---
 
-## ⚙️ Setup Instructions
+## Database tables (high-level)
 
-### 1️⃣ Clone Repo
-```bash
-git clone https://github.com/vijay262692/Digital-Wallet.git
-cd Digital-Wallet
+- users — Registered user accounts (username, passwordHash, email, ...)
+- wallets — One per user; stores balance
+- cards — Tokenized card entries (masked PAN, token, status)
+- transactions — Payment events, amount, merchant, timestamp
 
+---
 
+## Setup & Run
 
+1. Clone
+   git clone https://github.com/vijay262692/Digital-Wallet.git
+   cd Digital-Wallet
 
-2️⃣ Configure Database (application.properties)
-spring.datasource.url=jdbc:postgresql://localhost:5432/walletdb
-spring.datasource.username=postgres
-spring.datasource.password=root
-spring.jpa.hibernate.ddl-auto=create
-spring.jpa.show-sql=true
+2. Configure the database in src/main/resources/application.properties (or override via environment variables)
+   spring.datasource.url=jdbc:postgresql://localhost:5432/walletdb
+   spring.datasource.username=postgres
+   spring.datasource.password=root
+   spring.jpa.hibernate.ddl-auto=create
+   spring.jpa.show-sql=true
 
-3️⃣ Build & Run
-mvn clean install
-mvn spring-boot:run
+   Recommended: use environment variables or a secure secrets manager for credentials in non-demo deployments.
 
+3. Build & run
+   mvn clean install
+   mvn spring-boot:run
 
-App Runs On → http://localhost:8080
+4. App URL
+   http://localhost:8080
 
-🌐 Available Pages (UI)
-Page	File	Description
-Login	login.html	User login (RSA encrypted)
-Register	register.html	Sign up new user
-Dashboard	dashboard.html	App navigation home
-Add Card	add-card.html	Encrypts PAN + Tokenizes
-View Cards	view-cards.html	Displays tokenized cards
-Make Payment	make-payment.html	Pay using token
-Transactions	transactions.html	View transaction history
+UI pages (served from src/main/resources/static/):
+- login.html — User login (client-side RSA encryption)
+- register.html — New user signup
+- dashboard.html — App home
+- add-card.html — Add card (PAN encrypted on client)
+- view-cards.html — View tokenized cards (masked)
+- make-payment.html — Make payment using a stored token
+- transactions.html — View transaction history
 
-All UI files are served from:
+---
 
-src/main/resources/static/
+## REST API Reference
 
-🔑 REST API Reference
+- GET /api/wallet/publicKey — Fetch RSA public key for client encryption
+- POST /api/user/register — Register a new user
+- POST /api/user/login — Login
+- POST /api/wallet/addCard/{username} — Add a tokenized card for a user
+- GET /api/wallet/cards/{username} — List cards for a user
+- POST /api/wallet/pay — Make a payment
+- GET /api/wallet/transactions/{username} — List user transactions
 
-Action	Method	Endpoint
-
-Get Public Key	GET	/api/wallet/publicKey
-Register User	POST	/api/user/register
-Login User	POST	/api/user/login
-Add Card	POST	/api/wallet/addCard/{username}
-List Cards	GET	/api/wallet/cards/{username}
-Make Payment	POST	/api/wallet/pay
-List Transactions	GET	/api/wallet/transactions/{username}
-
-
-Sample Payment Request:
+Sample payment request body:
 {
   "username": "vijay",
   "token": "VISA-TOKEN-82kdn1x",
@@ -105,33 +109,95 @@ Sample Payment Request:
   "merchant": "Amazon"
 }
 
+---
 
+## MailService (NEW)
 
-🧩 Tech Stack
+This demo includes a lightweight MailService concept to support email notifications (e.g., registration confirmation, payment receipts, alerts). The following describes recommended configuration and usage patterns for a simple yet robust MailService.
 
-Layer	Technology
-Backend	Java 17, Spring Boot 2.7, Spring Data JPA
-Encryption	RSA (Java Crypto + Forge.js)
-Frontend	HTML5, CSS3, Vanilla JS, Axios
-Database	PostgreSQL
-Build Tool	Maven
+Purpose
+- Send transactional emails (registration welcome, password reset links, payment receipts, account alerts)
+- Use templated email bodies (Thymeleaf, FreeMarker, or simple text templates)
+- Support async sending and basic retry/error handling in the demo
 
+Configuration (application.properties or environment variables)
+- spring.mail.host=smtp.example.com
+- spring.mail.port=587
+- spring.mail.username=your-smtp-username
+- spring.mail.password=your-smtp-password
+- spring.mail.properties.mail.smtp.auth=true
+- spring.mail.properties.mail.smtp.starttls.enable=true
+- spring.mail.default-from=no-reply@example.com
 
+Security note: Do not store plaintext credentials in version control. Use environment variables, a vault, or CI/CD secrets.
 
-🛣️ Roadmap
+Suggested Java MailService implementation (concept)
+- A Spring @Service class (MailService) that depends on JavaMailSender
+- Send methods:
+  - sendSimpleEmail(to, subject, body)
+  - sendTemplateEmail(to, subject, templateName, model)
+  - sendAsync(...) — annotated with @Async or using a TaskExecutor
+- Optional: a lightweight retry policy for transient SMTP failures (e.g., RetryTemplate or Spring Retry)
 
-✅ PostgreSQL DB Persistence
+Example usage (pseudo)
+- After successful registration, queue a welcome email:
+  mailService.sendTemplateEmail(user.getEmail(), "Welcome to Digital Wallet", "welcome.html", model);
 
-✅ Status update on Cards (ACTIVE/SUSPENDED/TERMINATED)
+Testing
+- Use a test SMTP server (GreenMail, MailHog) for integration tests
+- In unit tests, mock JavaMailSender and assert that compose/send methods are called
+- For local development, direct emails to MailHog or stdout
 
-🔥 JWT Authentication + Secure Sessions
+Templates
+- Place email templates in src/main/resources/templates/
+- Use Thymeleaf/FreeMarker or simple string templates for demo
 
+Delivery & fallback
+- For production-quality projects, add delivery retries, dead-lettering, or DB-backed queueing for failed sends
+- Track message send status in a lightweight table if required
 
-👤 Author
+Example environment variable names for container deployments
+- MAIL_HOST, MAIL_PORT, MAIL_USERNAME, MAIL_PASSWORD, MAIL_FROM
+
+---
+
+## Tech stack
+
+- Java 17
+- Spring Boot 2.7.x
+- Spring Data JPA (Hibernate)
+- PostgreSQL
+- RSA encryption (Java Crypto + Forge.js on the frontend)
+- Frontend: HTML5, CSS3, Vanilla JS, Axios
+- Build tool: Maven
+
+---
+
+## Roadmap
+
+Planned / in-demo
+- PostgreSQL DB persistence — done
+- Card status lifecycle (ACTIVE / SUSPENDED / TERMINATED) — done (demo)
+- MailService (transactional emails, README describes configuration) — added to README (implementation can be added on request)
+
+Proposed / future
+- JWT authentication & secure sessions
+- Production-ready secure key management (KMS/HSM)
+- Rate limiting and fraud detection hooks
+- Proper logging and observability (metrics/tracing)
+
+---
+
+## Author
 
 BaluRaju P V
 
 MIT License © 2025
 
-Notes:
-- This is a demo. Do NOT use this code in production without proper security review.
+---
+
+## Security & usage notes
+
+- This project is a demo and is NOT intended for production without a security review.
+- Do not store private keys, SMTP credentials, or database passwords in public repos.
+- Use HTTPS and secure key storage in real deployments.
