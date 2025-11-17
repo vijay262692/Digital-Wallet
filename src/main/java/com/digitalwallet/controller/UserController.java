@@ -4,11 +4,15 @@ import com.digitalwallet.common.CryptoUtil;
 import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.model.User;
 import com.digitalwallet.service.EmailService;
+import com.digitalwallet.service.RefreshTokenService;
+import com.digitalwallet.repository.RefreshTokenRepository;
 import com.digitalwallet.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
+import com.digitalwallet.model.RefreshToken;
+
 
 import java.security.KeyPair;
 import java.time.LocalDateTime;
@@ -34,6 +38,11 @@ public class UserController {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+    private RefreshTokenService refreshTokenService;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepo;
     /**
      * ✅ Returns current RSA public key for encrypting login/register credentials
      */
@@ -252,6 +261,9 @@ public class UserController {
                 return response;
             }
 
+            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+            response.put("refreshToken", refreshToken.getToken());
+            
             response.put("status", "SUCCESS");
             response.put("message", "Login successful!");
             response.put("role", user.getRole());
@@ -263,4 +275,33 @@ public class UserController {
             return response;
         }
     }
+    
+    @PostMapping("/refresh-token")
+    public Map<String, Object> refreshAccessToken(@RequestBody Map<String, String> body) {
+        Map<String, Object> response = new LinkedHashMap<>();
+
+        String token = body.get("refreshToken");
+
+        RefreshToken rt = refreshTokenRepo.findByToken(token).orElse(null);
+
+        if (rt == null) {
+            response.put("status", "ERROR");
+            response.put("message", "Invalid refresh token");
+            return response;
+        }
+
+        if (refreshTokenService.isExpired(rt)) {
+            response.put("status", "ERROR");
+            response.put("message", "Refresh token expired");
+            return response;
+        }
+
+        // Generate new access token (you can replace with JWT)
+        String newAccessToken = UUID.randomUUID().toString();
+
+        response.put("status", "SUCCESS");
+        response.put("accessToken", newAccessToken);
+        return response;
+    }
+
 }
