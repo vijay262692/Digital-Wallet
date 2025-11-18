@@ -17,6 +17,7 @@ import com.digitalwallet.model.RefreshToken;
 import java.security.KeyPair;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.Optional;
@@ -50,6 +51,13 @@ public class UserController {
     public String getPublicKey() {
         return CryptoUtil.publicKeyToBase64(keyManager.getKeyPair().getPublic());
     }
+    
+    
+    @GetMapping("/all")
+    public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
+
 
     /**
      * ✅ Register a new user
