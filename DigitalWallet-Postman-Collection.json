@@ -1,0 +1,176 @@
+{
+  "info": {
+    "name": "Digital Wallet APIs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "USER APIs",
+      "item": [
+        {
+          "name": "Get User Public Key",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/user/publicKey"
+          }
+        },
+        {
+          "name": "Register User (Encrypted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<encrypted-base64>"
+            },
+            "url": "http://192.168.29.19:8080/api/user/register"
+          }
+        },
+        {
+          "name": "Get All Users",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/user/all"
+          }
+        },
+        {
+          "name": "Activate User",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/user/activate?token={{token}}"
+          }
+        },
+        {
+          "name": "Verify OTP",
+          "request": {
+            "method": "POST",
+            "url": "http://192.168.29.19:8080/api/user/verify-otp?username={{username}}&otp={{otp}}"
+          }
+        },
+        {
+          "name": "Login User (Encrypted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<encrypted-base64>"
+            },
+            "url": "http://192.168.29.19:8080/api/user/login"
+          }
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"refreshToken\": \"{{refreshToken}}\"}"
+            },
+            "url": "http://192.168.29.19:8080/api/user/refresh-token"
+          }
+        }
+      ]
+    },
+    {
+      "name": "WALLET APIs",
+      "item": [
+        {
+          "name": "Get Wallet Public Key",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/wallet/publicKey"
+          }
+        },
+        {
+          "name": "Add Card (Encrypted)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "<encrypted-base64>"
+            },
+            "url": "http://192.168.29.19:8080/api/wallet/addCard/{{username}}"
+          }
+        },
+        {
+          "name": "Get User Cards",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/wallet/cards/{{username}}"
+          }
+        },
+        {
+          "name": "Update Card Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{username}}\",\"token\":\"{{token}}\",\"status\":\"ACTIVE\"}"
+            },
+            "url": "http://192.168.29.19:8080/api/wallet/cardStatus"
+          }
+        },
+        {
+          "name": "Make Payment",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"username\":\"{{username}}\",\"token\":\"{{token}}\",\"amount\":100,\"merchant\":\"Amazon\"}"
+            },
+            "url": "http://192.168.29.19:8080/api/wallet/pay"
+          }
+        },
+        {
+          "name": "Get All Transactions",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/wallet/transactions"
+          }
+        },
+        {
+          "name": "Get Transactions by User",
+          "request": {
+            "method": "GET",
+            "url": "http://192.168.29.19:8080/api/wallet/transactions/{{username}}"
+          }
+        }
+      ]
+    }
+  ]
+}
