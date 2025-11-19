@@ -110,6 +110,7 @@
   <select id="tokenSelect"></select>
   <input type="text" id="amount" placeholder="Amount (₹)" />
   <input type="text" id="merchant" placeholder="Merchant Name" />
+<input type="password" id="pin" placeholder="Enter Wallet PIN" maxlength="4" /> 
   <button onclick="makePayment()">Pay Now</button>
   <p id="result"></p>
 </div>
@@ -121,6 +122,8 @@
   // Load user's cards
  async function loadCards() {
   try {
+
+
     const res = await axios.get(`/api/wallet/cards/${username}`);
     const cards = res.data;
     const select = document.getElementById("tokenSelect");
@@ -147,7 +150,9 @@
     resultBox.textContent = "⏳ Processing...";
 
     try {
-      const res = await axios.post("/api/wallet/pay", { username, token, amount, merchant });
+
+      const pin = document.getElementById("pin").value.trim();
+      const res = await axios.post("/api/wallet/pay", { username, token, amount, merchant , pin });
       resultBox.innerHTML = `<span class="success">✅ ${res.data.message}</span>`;
     } catch (err) {
       resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"}</span>`;

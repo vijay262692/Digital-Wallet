@@ -26,6 +26,37 @@ public class User {
     @Column(name = "activated")
     private Boolean activated = false;
     
+    
+    public String getWalletPin() {
+		return walletPin;
+	}
+
+	public void setWalletPin(String walletPin) {
+		this.walletPin = walletPin;
+	}
+
+	public String getResetPinOTP() {
+		return resetPinOTP;
+	}
+
+	public void setResetPinOTP(String resetPinOTP) {
+		this.resetPinOTP = resetPinOTP;
+	}
+
+	public LocalDateTime getResetPinExpiry() {
+		return resetPinExpiry;
+	}
+
+	public void setResetPinExpiry(LocalDateTime resetPinExpiry) {
+		this.resetPinExpiry = resetPinExpiry;
+	}
+
+	@Column(nullable = true)
+	private String walletPin;
+
+ // Forgot PIN fields
+ private String resetPinOTP;
+ private LocalDateTime resetPinExpiry;
   
     public LocalDateTime getOtpExpiry() {
 		return otpExpiry;
