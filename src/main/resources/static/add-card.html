@@ -132,6 +132,13 @@
     const cvv = document.getElementById("cvv").value.trim();
     const resultDiv = document.getElementById("result");
 
+// ⭐ NEW: Check if Wallet PIN is set
+    const pinStatus = await fetch(`/api/user/has-pin/${username}`).then(r => r.json());
+    if (!pinStatus.hasPin) {
+        resultDiv.innerHTML = `<span class="error">⚠️ Please set your Wallet PIN before adding a card.</span>`;
+        return;
+    }
+
     if (pan.length !== 16 || expiry.length !== 5 || cvv.length !== 3) {
       resultDiv.innerHTML = `<span class="error">⚠️ Please enter valid card details.</span>`;
       return;

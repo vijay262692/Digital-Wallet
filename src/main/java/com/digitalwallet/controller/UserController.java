@@ -9,6 +9,7 @@ import com.digitalwallet.repository.RefreshTokenRepository;
 import com.digitalwallet.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
 import com.digitalwallet.model.RefreshToken;
@@ -16,6 +17,7 @@ import com.digitalwallet.model.RefreshToken;
 
 import java.security.KeyPair;
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +46,10 @@ public class UserController {
 
     @Autowired
     private RefreshTokenRepository refreshTokenRepo;
+    
+    @Autowired
+    private BCryptPasswordEncoder passwordEncoder;
+
     /**
      * ✅ Returns current RSA public key for encrypting login/register credentials
      */
@@ -223,8 +229,56 @@ public class UserController {
 
         userRepository.save(user);
 
-        return new RedirectView("/activation-success.html?username=" + username);
+        return new RedirectView("/set-pin.html?username=" + username);
     }
+    
+    
+    @PostMapping("/set-pin")
+    public Map<String, Object> setPin(@RequestBody Map<String, String> req) {
+        Map<String, Object> res = new LinkedHashMap<>();
+
+        try {
+            String username = req.get("username");
+            String pin = req.get("pin");
+
+            User user = userRepository.findByUsername(username).orElse(null);
+            if (user == null) {
+                res.put("status", "ERROR");
+                res.put("message", "User not found");
+                return res;
+            }
+
+            if (user.getWalletPin() != null) {
+                res.put("status", "ERROR");
+                res.put("message", "PIN already set — use change PIN");
+                return res;
+            }
+
+            String hashedPin = passwordEncoder.encode(pin);
+            user.setWalletPin(hashedPin);
+            userRepository.save(user);
+
+            res.put("status", "SUCCESS");
+            res.put("message", "Wallet PIN set successfully");
+            return res;
+
+        } catch (Exception e) {
+            res.put("status", "ERROR");
+            res.put("message", e.getMessage());
+            return res;
+        }
+    }
+
+    
+    @GetMapping("/has-pin/{username}")
+    public Map<String, Object> hasPin(@PathVariable String username) {
+        Map<String, Object> res = new HashMap<>();
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        res.put("hasPin", user != null && user.getWalletPin() != null);
+        return res;
+    }
+
 
 
     /**

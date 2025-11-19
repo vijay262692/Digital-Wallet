@@ -8,6 +8,7 @@ import com.digitalwallet.repository.*;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
@@ -25,6 +26,7 @@ public class WalletController {
     @Autowired private WalletRepository walletRepository;
     @Autowired private CardRepository cardRepository;
     @Autowired private TransactionRepository transactionRepository;
+    @Autowired private BCryptPasswordEncoder passwordEncoder;
 
     @GetMapping("/publicKey")
     public String getPublicKey() {
@@ -50,6 +52,13 @@ public class WalletController {
             if (user == null) {
                 response.put("status", "ERROR");
                 response.put("message", "User not found: " + username);
+                return response;
+            }
+            
+            // ⭐ BLOCK CARD ADD IF PIN IS NOT SET
+            if (user.getWalletPin() == null) {
+                response.put("status", "ERROR");
+                response.put("message", "Please set your Wallet PIN before adding a card.");
                 return response;
             }
 
@@ -165,6 +174,7 @@ public class WalletController {
             String username = String.valueOf(request.get("username")); // add username to request
             String token = String.valueOf(request.get("token"));
             double amount = Double.parseDouble(String.valueOf(request.get("amount")));
+            String pin = String.valueOf(request.get("pin"));   // ⭐ NEW FIELD
             String merchant = String.valueOf(request.get("merchant"));
 
             User user = userRepository.findByUsername(username).orElse(null);
@@ -173,6 +183,27 @@ public class WalletController {
                 response.put("message", "User not found: " + username);
                 return response;
             }
+            
+            // ⭐ BLOCK PAYMENT IF PIN NOT SET
+            if (user.getWalletPin() == null) {
+                response.put("status", "ERROR");
+                response.put("message", "Wallet PIN not set. Please set PIN before making payment.");
+                return response;
+            }
+            
+            // ⭐ VALIDATE PIN (BCrypt)
+            if (pin == null || pin.trim().isEmpty()) {
+                response.put("status", "ERROR");
+                response.put("message", "PIN is required for payment.");
+                return response;
+            }
+            
+            if (!passwordEncoder.matches(pin, user.getWalletPin())) {
+                response.put("status", "ERROR");
+                response.put("message", "Invalid PIN. Please try again.");
+                return response;
+            }
+            
             Wallet wallet = ensureWallet(user);
 
             Card card = cardRepository.findByToken(token).orElse(null);
