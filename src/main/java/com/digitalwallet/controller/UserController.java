@@ -257,6 +257,16 @@ public class UserController {
             String hashedPin = passwordEncoder.encode(pin);
             user.setWalletPin(hashedPin);
             userRepository.save(user);
+            
+            // Send Activation mail to the user
+            emailService.sendEmail(
+                    user.getEmail(),
+                    "Your Wallet Account is Activated",
+                    "Hello " + user.getUsername() + ",\n\n" +
+                    "Your account has been successfully activated.\n" +
+                    "You can now use your Digital Wallet.\n\n" +
+                    "Thanks,\nDigital Wallet Team"
+            );
 
             res.put("status", "SUCCESS");
             res.put("message", "Wallet PIN set successfully");
