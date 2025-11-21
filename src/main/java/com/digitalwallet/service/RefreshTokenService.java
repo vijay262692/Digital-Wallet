@@ -2,6 +2,7 @@ package com.digitalwallet.service;
 import com.digitalwallet.model.RefreshToken;
 import  com.digitalwallet.repository.RefreshTokenRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import com.digitalwallet.model.User;
@@ -15,6 +16,8 @@ public class RefreshTokenService {
     @Autowired
     private RefreshTokenRepository refreshTokenRepo;
 
+    
+    @Transactional
     public RefreshToken createRefreshToken(User user) {
         refreshTokenRepo.deleteByUser(user); // remove old token
 
