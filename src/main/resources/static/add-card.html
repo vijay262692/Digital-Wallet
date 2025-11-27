@@ -100,7 +100,7 @@
   <button onclick="location.href='add-card.html'">➕ Add Card</button>
   <button onclick="location.href='make-payment.html'">💸 Pay</button>
   <button onclick="location.href='transactions.html'">📜 Transactions</button>
-  <button onclick="logout()">🚪 Logout</button>
+  <button onclick="logout()"> Logout</button>
 </header>
 
 <div class="card-box">
@@ -119,7 +119,7 @@
   const username = localStorage.getItem("loggedInUser");
   if (!username) location.href = "login.html";
 
-  document.getElementById("welcome").innerHTML = `👋 Hello, <b>${username}</b>`;
+  document.getElementById("welcome").innerHTML = ` Hello, <b>${username}</b>`;
 
   function logout() {
     localStorage.removeItem("loggedInUser");
