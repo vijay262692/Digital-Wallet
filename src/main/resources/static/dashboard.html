@@ -76,7 +76,9 @@
   <h2>🏦 Digital Wallet</h2>
   <div id="usernameDisplay"></div>
 
-  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  
+<button onclick="goToAddCard()">➕ Add Card</button>
+
   <button onclick="location.href='view-cards.html'">💳 View Saved Cards</button>
   <button onclick="location.href='make-payment.html'">💸 Make Payment</button>
   <button onclick="location.href='transactions.html'">📜 View Transactions</button>
@@ -120,6 +122,28 @@ const user = localStorage.getItem("loggedInUser");
  }
  catch (err) {
       alert("Error terminating account: " + err);
+    }
+  }
+
+async function goToAddCard() {
+    try {
+      // call backend /has-pin/{username}
+      const res = await fetch(`/api/user/has-pin/${encodeURIComponent(user)}`);
+      const data = await res.json();
+
+      if (!data.hasPin) {
+        alert("⚠ Please set your Wallet PIN before adding a card.");
+        // send user to PIN page, reusing existing screen
+        window.location.href = `set-pin.html?username=${encodeURIComponent(user)}`;
+        return;
+      }
+
+      // PIN exists → allow navigation
+      window.location.href = "add-card.html";
+
+    } catch (e) {
+      console.error("Error checking PIN:", e);
+      alert("Unable to verify Wallet PIN. Please try again.");
     }
   }
 

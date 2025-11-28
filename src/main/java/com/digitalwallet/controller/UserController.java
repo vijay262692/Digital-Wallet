@@ -168,13 +168,12 @@ public class UserController {
          String email = user.getEmail();
          String name  = user.getUsername();
 
-         // 1️⃣ Delete refresh tokens
+         //  Delete refresh tokens
          refreshTokenRepo.deleteByUser(user);
 
-         // Delete cards of this user(fixes FK error)
+         // Delete cards of this user
          cardRepository.deleteByUser(user);
 
-        
          
       // Delete transactions 
          transactionRepository.deleteByUser(user);
@@ -439,7 +438,7 @@ public class UserController {
             return response;
         }
 
-        // Generate new access token (you can replace with JWT)
+        // Generate new access token 
         String newAccessToken = UUID.randomUUID().toString();
 
         response.put("status", "SUCCESS");
