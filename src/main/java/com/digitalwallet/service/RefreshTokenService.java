@@ -26,7 +26,7 @@ public class RefreshTokenService {
         rt.setToken(UUID.randomUUID().toString());
         rt.setExpiryDate(LocalDateTime.now().plusDays(7)); // valid 7 days
 
-        return refreshTokenRepo.save(rt);
+        return refreshTokenRepo.save(rt); 
     }
 
     public boolean isExpired(RefreshToken rt) {
