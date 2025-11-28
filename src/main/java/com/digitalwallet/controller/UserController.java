@@ -5,14 +5,14 @@ import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.model.User;
 import com.digitalwallet.service.EmailService;
 import com.digitalwallet.service.RefreshTokenService;
-import com.digitalwallet.repository.RefreshTokenRepository;
-import com.digitalwallet.repository.UserRepository;
+import com.digitalwallet.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.servlet.view.RedirectView;
 import org.springframework.web.bind.annotation.*;
 import com.digitalwallet.model.RefreshToken;
+import org.springframework.transaction.annotation.Transactional;
 
 
 import java.security.KeyPair;
@@ -49,6 +49,15 @@ public class UserController {
     
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private CardRepository cardRepository;
+    
+    @Autowired
+    private TransactionRepository transactionRepository; 
+    
+    @Autowired
+    private WalletRepository walletRepository;  
 
     /**
      * ✅ Returns current RSA public key for encrypting login/register credentials
@@ -105,8 +114,8 @@ public class UserController {
             String plain = CryptoUtil.decryptBase64RSA(encryptedBase64.trim(), kp.getPrivate());
 
             String[] parts = plain.split("\\|");
-            String username = parts[0];
-            String email = parts[1];
+            String username = parts[0].trim();
+            String email = parts[1].trim();
             String password = parts[2];
             String role = parts.length > 3 ? parts[3] : "USER";
 
@@ -138,6 +147,68 @@ public class UserController {
         }
     }
     
+
+ @DeleteMapping("/terminate/{username}")
+ @Transactional
+ public Map<String, Object> terminateAccount(@PathVariable String username) {
+     Map<String, Object> res = new LinkedHashMap<>();
+
+     try {
+         String normalized = username.trim();
+         System.out.println("🛑 Terminate request for username = [" + normalized + "]");
+
+         User user = userRepository.findByUsernameIgnoreCase(normalized).orElse(null);
+
+         if (user == null) {
+             res.put("status", "ERROR");
+             res.put("message", "User not found");
+             return res;
+         }
+
+         String email = user.getEmail();
+         String name  = user.getUsername();
+
+         // 1️⃣ Delete refresh tokens
+         refreshTokenRepo.deleteByUser(user);
+
+         // Delete cards of this user(fixes FK error)
+         cardRepository.deleteByUser(user);
+
+        
+         
+      // Delete transactions 
+         transactionRepository.deleteByUser(user);
+         
+      // Delete wallet(s)
+         walletRepository.deleteByUser(user);
+
+         // delete user
+         userRepository.delete(user);
+
+         //Send email AFTER successful delete
+         emailService.sendEmail(
+                 email,
+                 "Your Digital Wallet Account Has Been Terminated",
+                 "Hello " + name + ",\n\n" +
+                 "Your Digital Wallet account has been successfully terminated.\n" +
+                 "All tokens, saved cards and access permissions have been removed permanently.\n\n" +
+                 "If you believe this was a mistake, please contact support.\n\n" +
+                 "Regards,\nDigital Wallet Team"
+         );
+
+         res.put("status", "SUCCESS");
+         res.put("message", "Account terminated & email notification sent.");
+         return res;
+
+     } catch (Exception e) {
+         e.printStackTrace();
+         res.put("status", "ERROR");
+         res.put("message", "Account termination failed: " + e.getMessage());
+         return res;
+     }
+ }
+
+
     
 	/*
 	 * @GetMapping("/activate") public String activateAccount(@RequestParam("token")

@@ -10,5 +10,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
     
     Optional<User> findByActivationToken(String token);
+    
+    Optional<User> findByUsernameIgnoreCase(String username);
+
 
 }

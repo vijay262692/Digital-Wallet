@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Account Terminated | Digital Wallet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: linear-gradient(135deg, #ff416c, #ff4b2b);
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      text-align: center;
+    }
+    .box {
+      background: rgba(0,0,0,0.25);
+      padding: 32px 40px;
+      border-radius: 18px;
+      max-width: 420px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+    }
+    h2 {
+      margin-bottom: 10px;
+      font-weight: 600;
+    }
+    p {
+      margin: 6px 0;
+      opacity: 0.9;
+    }
+    button {
+      margin-top: 18px;
+      padding: 10px 18px;
+      border-radius: 10px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      background: #ffffff;
+      color: #ff416c;
+      transition: 0.2s;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
+    }
+    .small {
+      margin-top: 10px;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>✅ Account Terminated</h2>
+  <p>Your Digital Wallet account has been permanently deleted.</p>
+  <p>You can always create a new account any time.</p>
+
+  <button onclick="goToLogin()">Go to Login</button>
+  <p class="small">You will be redirected to login in <span id="countdown">5</span> seconds...</p>
+</div>
+
+<script>
+  function goToLogin() {
+    window.location.href = "login.html";
+  }
+
+  // Auto redirect after 5 seconds
+  let seconds = 5;
+  const span = document.getElementById("countdown");
+  const timer = setInterval(() => {
+    seconds--;
+    span.textContent = seconds;
+    if (seconds <= 0) {
+      clearInterval(timer);
+      goToLogin();
+    }
+  }, 1000);
+</script>
+
+</body>
+</html>
