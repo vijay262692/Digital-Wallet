@@ -12,6 +12,8 @@ public interface TransactionRepository extends JpaRepository<TransactionRecord, 
 
     List<TransactionRecord> findByUser_Username(String username);
     
+    List<TransactionRecord> findByUserUsernameOrderByTimestampDesc(String username);
+    
     
     @Modifying
     @Transactional
