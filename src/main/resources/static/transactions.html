@@ -132,6 +132,11 @@
     <button id="prevBtn">⟵ Prev</button>
     <span id="pageInfo"></span>
     <button id="nextBtn">Next ⟶</button>
+
+ <!-- ⬇️ New: Download Statement button -->
+    <button class="download-btn" onclick="downloadStatement()">
+      ⬇️ Download Statement (CSV)
+    </button>
   </div>
 </div>
 
@@ -192,6 +197,13 @@
     localStorage.removeItem("loggedInUser");
     location.href = "login.html";
   }
+
+  // : CSV export – hits /api/transactions/{username}/export
+ function downloadStatement() {
+  window.location.href = `/api/wallet/transactions/${encodeURIComponent(username)}/export`;
+}
+
+
 
   loadTransactions();
   setInterval(loadTransactions, 5000);

@@ -11,6 +11,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.security.KeyPair;
 import java.util.*;
@@ -273,5 +277,43 @@ public class WalletController {
 
     }
     
-    
+    @GetMapping(value = "/transactions/{username}/export", produces = "text/csv")
+    public void exportTransactionsCsv(@PathVariable String username,
+                                      HttpServletResponse response) throws IOException {
+
+        response.setContentType("text/csv");
+        String fileName = "statement-" + username + ".csv";
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+        var txns = transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+
+        PrintWriter writer = response.getWriter();
+        writer.println("Txn ID,Date Time,Amount,Status,Merchant,Masked PAN,Provider,Token");
+
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+        for (var tx : txns) {
+            String id        = String.valueOf(tx.getId());
+            String dateTime  = tx.getTimestamp() != null ? sdf.format(tx.getTimestamp()) : "";
+            String amount    = String.valueOf(tx.getAmount());
+            String status    = safeCsv(tx.getStatus());
+            String merchant  = safeCsv(tx.getMerchant());
+            String maskedPan = safeCsv(tx.getMaskedPan());
+            String provider  = safeCsv(tx.getProvider());
+            String token     = safeCsv(tx.getToken());
+
+            writer.println(String.join(",", id, dateTime, amount, status, merchant, maskedPan, provider, token));
+        }
+
+        writer.flush();
+    }
+
+    private String safeCsv(String value) {
+        if (value == null) return "\"\"";
+        String v = value.replace("\"", "\"\"");
+        return "\"" + v + "\"";
+    }
 }
+
+    
+
