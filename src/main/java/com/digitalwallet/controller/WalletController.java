@@ -5,6 +5,7 @@ import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.broker.PNOBroker;
 import com.digitalwallet.model.*;
 import com.digitalwallet.repository.*;
+import com.digitalwallet.service.EmailService;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -31,6 +32,7 @@ public class WalletController {
     @Autowired private CardRepository cardRepository;
     @Autowired private TransactionRepository transactionRepository;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
+    @Autowired private EmailService emailService;
 
     @GetMapping("/publicKey")
     public String getPublicKey() {
@@ -231,9 +233,6 @@ public class WalletController {
             // wallet.setBalance(newBalance);
             // walletRepository.save(wallet);
 
-            String message = String.format("[%s] Payment of ₹%.2f processed at %s via token %s",
-                    provider, amount, merchant, token);
-
             // save transaction in DB
             TransactionRecord record = new TransactionRecord();
             record.setToken(token);
@@ -246,6 +245,38 @@ public class WalletController {
             record.setWallet(wallet);
             transactionRepository.save(record);
 
+            
+         //  send email + CSV statement
+            try {
+                // All transactions for this user (for statement)
+                List<TransactionRecord> userTxns =
+                        transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+
+                String emailBody =
+                        "Hello " + user.getUsername() + ",\n\n" +
+                        "Your payment was successful.\n\n" +
+                        "Amount   : ₹" + String.format("%.2f", amount) + "\n" +
+                        "Merchant : " + merchant + "\n" +
+                        "Provider : " + provider + "\n" +
+                        "Card     : " + card.getMaskedPan() + "\n" +
+                        "Txn ID   : " + record.getId() + "\n\n" +
+                        "Your latest transaction statement is attached as a CSV file.\n\n" +
+                        "Thanks,\nDigital Wallet Team";
+
+                emailService.sendPaymentReceiptWithCsv(
+                        user.getEmail(),
+                        user.getUsername(),
+                        emailBody,
+                        userTxns
+                );
+            } catch (Exception mailEx) {
+                // Don’t break payment if mail fails, just log
+                mailEx.printStackTrace();
+            }
+            
+            String message = String.format("[%s] Payment of ₹%.2f processed at %s via token %s",
+                    provider, amount, merchant, token);
+            
             response.put("status", "SUCCESS");
             response.put("message", message);
             response.put("merchant", merchant);
