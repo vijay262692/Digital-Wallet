@@ -228,11 +228,6 @@ public class WalletController {
 
             String provider = card.getProvider();
 
-            // (Optional) update wallet balance here (debit)
-            // BigDecimal newBalance = wallet.getBalance().subtract(BigDecimal.valueOf(amount));
-            // wallet.setBalance(newBalance);
-            // walletRepository.save(wallet);
-
             // save transaction in DB
             TransactionRecord record = new TransactionRecord();
             record.setToken(token);
