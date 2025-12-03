@@ -106,7 +106,7 @@ public class EmailService {
 
     private String safeCsv(String value) {
         if (value == null) return "\"\"";
-        String v = value.replace("\"", "\"\""); // escape quotes
+        String v = value.replace("\"", "\"\"");
         return "\"" + v + "\"";
     }
 }

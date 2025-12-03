@@ -190,14 +190,14 @@ public class WalletController {
                 return response;
             }
             
-            // ⭐ BLOCK PAYMENT IF PIN NOT SET
+            // BLOCK PAYMENT IF PIN NOT SET
             if (user.getWalletPin() == null) {
                 response.put("status", "ERROR");
                 response.put("message", "Wallet PIN not set. Please set PIN before making payment.");
                 return response;
             }
             
-            // ⭐ VALIDATE PIN (BCrypt)
+            // VALIDATE PIN (BCrypt)
             if (pin == null || pin.trim().isEmpty()) {
                 response.put("status", "ERROR");
                 response.put("message", "PIN is required for payment.");
