@@ -112,6 +112,23 @@
 <div class="container">
   <h2>📜 Transaction History</h2>
 
+
+<div class="controls" style="display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;">
+  <div style="display:flex;gap:8px;align-items:center;">
+    <label style="color:#e6f0ff;font-size:13px;" for="filterDate">Filter by date:</label>
+    <input id="filterDate" type="date" style="padding:8px 10px;border-radius:8px;border:none;font-size:14px;" />
+    <button id="clearDateBtn" class="btn ghost" style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:transparent;border:1px solid rgba(255,255,255,0.18);color:white;font-weight:600;">
+      Clear
+    </button>
+    <button id="downloadCsvBtn" class="btn" style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(90deg,#00b4db,#0072ff);color:white;font-weight:600;">
+      ⬇️ Download CSV
+    </button>
+  </div>
+  <div id="totalInfo" style="color:#e6f0ff;font-size:13px;">Loading transactions...</div>
+</div>
+
+
+
   <table>
     <thead>
       <tr>
@@ -133,7 +150,7 @@
     <span id="pageInfo"></span>
     <button id="nextBtn">Next ⟶</button>
 
- <!-- ⬇️ New: Download Statement button -->
+ <!-- Download Statement button -->
     <button class="download-btn" onclick="downloadStatement()">
       ⬇️ Download Statement (CSV)
     </button>
@@ -145,69 +162,181 @@
   if (!username) location.href = "login.html";
 
   const rowsPerPage = 6;
-  let transactions = [];
+  let transactions = [];         // raw from backend
+  let filtered = [];             // after date filter
   let currentPage = 1;
 
+  const txnBody = document.getElementById("txnBody");
+  const pageInfo = document.getElementById("pageInfo");
+  const totalInfo = document.getElementById("totalInfo");
+  const filterDateInput = document.getElementById("filterDate");
+  const clearDateBtn = document.getElementById("clearDateBtn");
+  const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+
+  // Load transactions from backend
   async function loadTransactions() {
-    const res = await fetch(`/api/wallet/transactions/${username}`);
-    transactions = await res.json();
+    try {
+      const res = await fetch(`/api/wallet/transactions/${encodeURIComponent(username)}`);
+      if (!res.ok) {
+        txnBody.innerHTML = `<tr><td colspan="6">Failed to load transactions (HTTP ${res.status})</td></tr>`;
+        return;
+      }
+      const raw = await res.json();
+      // normalize common field names
+      transactions = (raw || []).map(tx => ({
+        id: tx.id ?? tx.txnId ?? "",
+        timestamp: tx.timestamp ?? tx.time ?? tx.date ?? null,
+        merchant: tx.merchant ?? tx.merchantName ?? "",
+        maskedPan: tx.maskedPan ?? tx.card ?? "**** **** ****",
+        provider: tx.provider ?? "",
+        status: tx.status ?? "UNKNOWN",
+        amount: Number(tx.amount ?? tx.value ?? 0),
+        token: tx.token ?? ""
+      }));
+      currentPage = 1;
+      applyFilter();
+    } catch (err) {
+      console.error(err);
+      txnBody.innerHTML = `<tr><td colspan="6">Error loading transactions</td></tr>`;
+    }
+  }
+
+  // convert timestamp to local yyyy-mm-dd string for date comparison
+  function toLocalDateString(ts) {
+    if (!ts) return null;
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) {
+      // try numeric epoch
+      const n = Number(ts);
+      if (!isNaN(n)) {
+        const d2 = new Date(n);
+        if (!isNaN(d2.getTime())) return toLocalDateString(d2.toISOString());
+      }
+      return null;
+    }
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  }
+
+  // Apply date filter (if any) and render
+  function applyFilter() {
+    const selected = filterDateInput.value; // "" or yyyy-mm-dd
+    if (selected) {
+      filtered = transactions.filter(tx => toLocalDateString(tx.timestamp) === selected);
+    } else {
+      filtered = transactions.slice();
+    }
+    // Reset current page if it exceeds total pages
+    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+    if (currentPage > totalPages) currentPage = 1;
     renderTable();
+    updateMeta();
   }
 
   function renderTable() {
-    const tbody = document.getElementById("txnBody");
-    tbody.innerHTML = "";
-
-    if (transactions.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="6">No transactions found.</td></tr>`;
+    txnBody.innerHTML = "";
+    if (filtered.length === 0) {
+      txnBody.innerHTML = `<tr><td colspan="6">No transactions found.</td></tr>`;
+      pageInfo.innerText = `Page 0 of 0`;
+      document.getElementById("prevBtn").disabled = true;
+      document.getElementById("nextBtn").disabled = true;
       return;
     }
 
     const start = (currentPage - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-    const page = transactions.slice(start, end);
+    const page = filtered.slice(start, start + rowsPerPage);
 
     page.forEach(tx => {
+      const dateDisplay = tx.timestamp ? (new Date(tx.timestamp)).toLocaleString() : "-";
       const tr = document.createElement("tr");
       tr.innerHTML = `
-        <td>${tx.timestamp || "-"}</td>
-        <td>${tx.merchant || "-"}</td>
-        <td>${tx.maskedPan || "**** **** ****"}</td>
-        <td><span class="provider-tag">${tx.provider || "-"}</span></td>
-        <td class="${tx.status === 'SUCCESS' ? 'success' : 'failed'}">${tx.status}</td>
-        <td><b>${parseFloat(tx.amount).toFixed(2)}</b></td>
+        <td>${escapeHtml(dateDisplay)}</td>
+        <td>${escapeHtml(tx.merchant || "-")}</td>
+        <td>${escapeHtml(tx.maskedPan || "**** **** ****")}</td>
+        <td><span class="provider-tag">${escapeHtml(tx.provider || "-")}</span></td>
+        <td class="${tx.status === 'SUCCESS' ? 'success' : 'failed'}">${escapeHtml(tx.status)}</td>
+        <td><b>${Number(tx.amount || 0).toFixed(2)}</b></td>
       `;
-      tbody.appendChild(tr);
+      txnBody.appendChild(tr);
     });
 
     updatePagination();
   }
 
   function updatePagination() {
-    const totalPages = Math.ceil(transactions.length / rowsPerPage);
-    document.getElementById("pageInfo").innerText = `Page ${currentPage} of ${totalPages}`;
+    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+    pageInfo.innerText = `Page ${currentPage} of ${totalPages}`;
     document.getElementById("prevBtn").disabled = currentPage === 1;
     document.getElementById("nextBtn").disabled = currentPage === totalPages;
   }
 
-  document.getElementById("prevBtn").onclick = () => { currentPage--; renderTable(); };
-  document.getElementById("nextBtn").onclick = () => { currentPage++; renderTable(); };
+  function updateMeta() {
+    const totalTx = filtered.length;
+    const totalAmount = filtered.reduce((s, t) => s + Number(t.amount || 0), 0);
+    if (totalInfo) totalInfo.innerText = `Showing ${totalTx} transaction(s). Total ₹${totalAmount.toFixed(2)}`;
+  }
+
+  // Pagination button handlers
+  document.getElementById("prevBtn").onclick = () => {
+    if (currentPage > 1) { currentPage--; renderTable(); }
+  };
+  document.getElementById("nextBtn").onclick = () => {
+    const totalPages = Math.ceil(filtered.length / rowsPerPage) || 1;
+    if (currentPage < totalPages) { currentPage++; renderTable(); }
+  };
+
+  // Date filter handlers
+  filterDateInput.addEventListener("change", () => { currentPage = 1; applyFilter(); });
+  clearDateBtn.addEventListener("click", () => { filterDateInput.value = ""; currentPage = 1; applyFilter(); });
+
+  // CSV download (client-side). Downloads filtered list if date selected, otherwise all transactions.
+  downloadCsvBtn.addEventListener("click", () => {
+    const rows = (filterDateInput.value ? filtered : transactions) || [];
+    if (!rows.length) { alert("No transactions to download."); return; }
+
+    const csvRows = [];
+    csvRows.push(["Txn ID","DateTime","Amount","Status","Merchant","Masked PAN","Provider","Token"]);
+    rows.forEach(tx => {
+      const dt = tx.timestamp ? new Date(tx.timestamp).toISOString().replace('T',' ').split('.')[0] : "";
+      csvRows.push([tx.id || "", dt, Number(tx.amount || 0).toFixed(2), tx.status || "", tx.merchant || "", tx.maskedPan || "", tx.provider || "", tx.token || ""]);
+    });
+
+    const csvContent = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement('a');
+    a.href = url;
+    const selDate = filterDateInput.value;
+    a.download = selDate ? `statement-${username}-${selDate}.csv` : `statement-${username}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  function escapeHtml(s) {
+    if (s === null || s === undefined) return "";
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;");
+  }
 
   function logout() {
     localStorage.removeItem("loggedInUser");
     location.href = "login.html";
   }
 
-  // : CSV export – hits /api/transactions/{username}/export
- function downloadStatement() {
-  window.location.href = `/api/wallet/transactions/${encodeURIComponent(username)}/export`;
-}
-
-
-
+  // initial load + periodic refresh
   loadTransactions();
   setInterval(loadTransactions, 5000);
 </script>
+
 
 </body>
 </html>
