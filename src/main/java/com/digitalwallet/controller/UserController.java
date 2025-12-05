@@ -60,7 +60,7 @@ public class UserController {
     private WalletRepository walletRepository;  
 
     /**
-     * ✅ Returns current RSA public key for encrypting login/register credentials
+     *  Returns current RSA public key for encrypting login/register credentials
      */
     @GetMapping("/publicKey")
     public String getPublicKey() {
@@ -75,7 +75,7 @@ public class UserController {
 
 
     /**
-     * ✅ Register a new user
+     *  Register a new user
      */
 	/*
 	 * @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
@@ -89,7 +89,7 @@ public class UserController {
 	 * String password = parts[2]; String role = parts.length > 3 ? parts[3] :
 	 * "USER";
 	 * 
-	 * // ✅ Updated check using JPA Optional if
+	 * // Updated check using JPA Optional if
 	 * (userRepository.findByUsername(username).isPresent()) {
 	 * response.put("status", "ERROR"); response.put("message",
 	 * "Username already exists!"); return response; }
