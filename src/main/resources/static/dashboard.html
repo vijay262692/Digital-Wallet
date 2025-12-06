@@ -104,7 +104,7 @@ const user = localStorage.getItem("loggedInUser");
   // Show username on dashboard
   document.getElementById("usernameDisplay").innerHTML = `👋 Welcome, <b>${user}</b>`;
 
-  // 🔥 TERMINATE ACCOUNT FUNCTION (no parameters, uses `user` from above)
+  //  TERMINATE ACCOUNT FUNCTION (no parameters, uses `user` from above)
   async function terminateAccount() {
     if (!confirm("Are you sure? This will permanently delete your account!")) return;
 
