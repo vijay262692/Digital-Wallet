@@ -155,7 +155,7 @@
       const res = await axios.post("/api/wallet/pay", { username, token, amount, merchant , pin });
       resultBox.innerHTML = `<span class="success">✅ ${res.data.message}</span>`;
     } catch (err) {
-      resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"}</span>`;
+      resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"} </span>`;
     }
   }
 
