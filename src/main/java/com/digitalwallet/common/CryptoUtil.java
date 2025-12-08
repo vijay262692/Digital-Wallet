@@ -25,7 +25,6 @@ public class CryptoUtil {
         return new String(decrypted);
     }
 
-    // ✅ New working encrypt method
     public static String encrypt(String plain, PublicKey publicKey) throws Exception {
         Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
