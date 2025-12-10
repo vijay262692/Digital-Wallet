@@ -184,7 +184,7 @@ public class UserController {
          // delete user
          userRepository.delete(user);
 
-         //Send email AFTER successful delete
+         //Send email after successful delete
          emailService.sendEmail(
                  email,
                  "Your Digital Wallet Account Has Been Terminated",
