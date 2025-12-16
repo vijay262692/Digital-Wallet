@@ -103,8 +103,6 @@ public class UserController {
 	 * "Registration failed: " + e.getMessage()); return response; } }
 	 */
 
-    
-   
 
     @PostMapping(value = "/register", consumes = MediaType.TEXT_PLAIN_VALUE)
     public Map<String, Object> register(@RequestBody String encryptedBase64) {
