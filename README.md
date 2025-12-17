@@ -191,6 +191,7 @@ Proposed / future
 ## Author
 
 BaluRaju P V
+Sr Software Engineer
 
 MIT License © 2025
 
