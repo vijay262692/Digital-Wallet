@@ -16,6 +16,9 @@ import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.List;
 
+import com.lowagie.text.*;
+import com.lowagie.text.pdf.*;
+import java.io.ByteArrayOutputStream;
 
 @Service
 public class EmailService {
@@ -51,34 +54,124 @@ public class EmailService {
     }
     
     
- //  send payment receipt with CSV statement attached
-    public void sendPaymentReceiptWithCsv(String to,
-                                          String username,
-                                          String bodyText,
-                                          List<TransactionRecord> transactions) {
+    
+    
+    
+  
+
+    private byte[] buildTransactionsPdf(String username, List<TransactionRecord> txns) {
 
         try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+            Document document = new Document();
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
 
-            helper.setTo(to);
-            helper.setSubject("Payment Successful - Digital Wallet");
-            helper.setText(bodyText);
+            PdfWriter.getInstance(document, out);
+            document.open();
 
-            // Build CSV content in memory
-            String csv = buildTransactionsCsv(username, transactions);
+            // Title
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Paragraph title = new Paragraph("Digital Wallet Statement", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
 
-            ByteArrayResource attachment =
-                    new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8));
+            document.add(new Paragraph("User: " + username));
+            document.add(new Paragraph(" "));
 
-            helper.addAttachment("statement-" + username + ".csv", attachment);
+            // Table
+            PdfPTable table = new PdfPTable(8);
+            table.setWidthPercentage(100);
 
-            mailSender.send(mimeMessage);
-        } catch (MessagingException e) {
-            
+            table.addCell("Txn ID");
+            table.addCell("Date Time");
+            table.addCell("Amount");
+            table.addCell("Status");
+            table.addCell("Merchant");
+            table.addCell("Masked PAN");
+            table.addCell("Provider");
+            table.addCell("Token");
+
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+            for (TransactionRecord tx : txns) {
+                table.addCell(String.valueOf(tx.getId()));
+                table.addCell(tx.getTimestamp() != null ? sdf.format(tx.getTimestamp()) : "");
+                table.addCell(String.valueOf(tx.getAmount()));
+                table.addCell(tx.getStatus());
+                table.addCell(tx.getMerchant());
+                table.addCell(tx.getMaskedPan());
+                table.addCell(tx.getProvider());
+                table.addCell(tx.getToken());
+            }
+
+            document.add(table);
+            document.close();
+
+            return out.toByteArray();
+
+        } catch (Exception e) {
             e.printStackTrace();
+            return null;
         }
     }
+    
+	/*
+	 * // send payment receipt with CSV statement attached public void
+	 * sendPaymentReceiptWithCsv(String to, String username, String bodyText,
+	 * List<TransactionRecord> transactions) {
+	 * 
+	 * try { MimeMessage mimeMessage = mailSender.createMimeMessage();
+	 * MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+	 * 
+	 * helper.setTo(to); helper.setSubject("Payment Successful - Digital Wallet");
+	 * helper.setText(bodyText);
+	 * 
+	 * // Build CSV content in memory String csv = buildTransactionsCsv(username,
+	 * transactions);
+	 * 
+	 * ByteArrayResource attachment = new
+	 * ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8));
+	 * 
+	 * helper.addAttachment("statement-" + username + ".csv", attachment);
+	 * 
+	 * mailSender.send(mimeMessage); } catch (MessagingException e) {
+	 * 
+	 * e.printStackTrace(); } }
+	 */
+    
+    
+    public void sendPaymentReceiptWithCsvAndPdf(String to,
+            String username,
+            String bodyText,
+            List<TransactionRecord> transactions) {
+
+try {
+MimeMessage mimeMessage = mailSender.createMimeMessage();
+MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
+
+helper.setTo(to);
+helper.setSubject("Payment Successful - Digital Wallet");
+helper.setText(bodyText);
+
+// ✅ CSV
+String csv = buildTransactionsCsv(username, transactions);
+ByteArrayResource csvAttachment =
+new ByteArrayResource(csv.getBytes(StandardCharsets.UTF_8));
+
+helper.addAttachment("statement-" + username + ".csv", csvAttachment);
+
+// ✅ PDF
+byte[] pdfBytes = buildTransactionsPdf(username, transactions);
+ByteArrayResource pdfAttachment =
+new ByteArrayResource(pdfBytes);
+
+helper.addAttachment("statement-" + username + ".pdf", pdfAttachment);
+
+mailSender.send(mimeMessage);
+
+} catch (MessagingException e) {
+e.printStackTrace();
+}
+}
 
     private String buildTransactionsCsv(String username, List<TransactionRecord> txns) {
         StringBuilder sb = new StringBuilder();
