@@ -258,7 +258,7 @@ public class WalletController {
                         "Your latest transaction statement is attached as a CSV file.\n\n" +
                         "Thanks,\nDigital Wallet Team";
 
-                emailService.sendPaymentReceiptWithCsv(
+                emailService.sendPaymentReceiptWithCsvAndPdf(
                         user.getEmail(),
                         user.getUsername(),
                         emailBody,
