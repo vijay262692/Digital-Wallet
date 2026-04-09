@@ -123,6 +123,12 @@
     <button id="downloadCsvBtn" class="btn" style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer;background:linear-gradient(90deg,#00b4db,#0072ff);color:white;font-weight:600;">
       ⬇️ Download CSV
     </button>
+
+<button id="downloadPdfBtn" class="btn" 
+style="padding:8px 12px;border-radius:8px;border:none;cursor:pointer;
+background:linear-gradient(90deg,#ff7e5f,#ff3f34);color:white;font-weight:600;">
+  📄 Download PDF
+</button>
   </div>
   <div id="totalInfo" style="color:#e6f0ff;font-size:13px;">Loading transactions...</div>
 </div>
@@ -168,6 +174,7 @@
   const filterDateInput = document.getElementById("filterDate");
   const clearDateBtn = document.getElementById("clearDateBtn");
   const downloadCsvBtn = document.getElementById("downloadCsvBtn");
+const downloadPdfBtn = document.getElementById("downloadPdfBtn");
 
   // Load transactions from backend
   async function loadTransactions() {
@@ -298,6 +305,10 @@
       const dt = tx.timestamp ? new Date(tx.timestamp).toISOString().replace('T',' ').split('.')[0] : "";
       csvRows.push([tx.id || "", dt, Number(tx.amount || 0).toFixed(2), tx.status || "", tx.merchant || "", tx.maskedPan || "", tx.provider || "", tx.token || ""]);
     });
+
+downloadPdfBtn.addEventListener("click", () => {
+  window.location.href = `/api/wallet/transactions/${encodeURIComponent(username)}/export/pdf`;
+});
 
     const csvContent = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
