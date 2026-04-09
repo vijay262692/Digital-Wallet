@@ -6,6 +6,9 @@ import com.digitalwallet.broker.PNOBroker;
 import com.digitalwallet.model.*;
 import com.digitalwallet.repository.*;
 import com.digitalwallet.service.EmailService;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.pdf.PdfWriter;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -19,6 +22,15 @@ import java.io.PrintWriter;
 import java.math.BigDecimal;
 import java.security.KeyPair;
 import java.util.*;
+
+import com.lowagie.text.Document;
+import com.lowagie.text.Paragraph;
+import com.lowagie.text.Font;
+import com.lowagie.text.FontFactory;
+import com.lowagie.text.Element;
+
+import com.lowagie.text.pdf.PdfWriter;
+import com.lowagie.text.pdf.PdfPTable;
 
 @RestController
 @RequestMapping("/api/wallet")
@@ -334,6 +346,59 @@ public class WalletController {
         writer.flush();
     }
 
+    @GetMapping(value = "/transactions/{username}/export/pdf", produces = "application/pdf")
+    public void exportTransactionsPdf(@PathVariable String username,
+                                     HttpServletResponse response) throws IOException {
+
+        response.setContentType("application/pdf");
+        String fileName = "statement-" + username + ".pdf";
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+        var txns = transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+
+        try {
+            Document document = new Document();
+            PdfWriter.getInstance(document, response.getOutputStream());
+
+            document.open();
+
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Paragraph title = new Paragraph("Digital Wallet Statement", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+
+            document.add(title);
+            document.add(new Paragraph("User: " + username));
+            document.add(new Paragraph(" "));
+
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100);
+
+            table.addCell("Date");
+            table.addCell("Merchant");
+            table.addCell("Card");
+            table.addCell("Provider");
+            table.addCell("Status");
+            table.addCell("Amount");
+
+            java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
+            for (var tx : txns) {
+                table.addCell(tx.getTimestamp() != null ? sdf.format(tx.getTimestamp()) : "");
+                table.addCell(tx.getMerchant());
+                table.addCell(tx.getMaskedPan());
+                table.addCell(tx.getProvider());
+                table.addCell(tx.getStatus());
+                table.addCell(String.valueOf(tx.getAmount()));
+            }
+
+            document.add(table);
+            document.close();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
     private String safeCsv(String value) {
         if (value == null) return "\"\"";
         String v = value.replace("\"", "\"\"");
