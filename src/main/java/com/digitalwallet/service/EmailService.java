@@ -111,6 +111,8 @@ public class EmailService {
 
 	/*
 	 * // send payment receipt with CSV statement attached public void
+
+	 This is only for CSV Format
 	 * sendPaymentReceiptWithCsv(String to, String username, String bodyText,
 	 * List<TransactionRecord> transactions) {
 	 * 
