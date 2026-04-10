@@ -307,9 +307,17 @@ const downloadPdfBtn = document.getElementById("downloadPdfBtn");
     });
 
 downloadPdfBtn.addEventListener("click", () => {
-  window.location.href = `/api/wallet/transactions/${encodeURIComponent(username)}/export/pdf`;
-});
 
+  const selectedDate = filterDateInput.value;
+
+  let url = `/api/wallet/transactions/${encodeURIComponent(username)}/export/pdf`;
+
+  if (selectedDate) {
+    url += `?date=${selectedDate}`;
+  }
+
+  window.location.href = url;
+});
     const csvContent = csvRows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
