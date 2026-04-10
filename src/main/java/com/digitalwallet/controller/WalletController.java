@@ -32,6 +32,8 @@ import com.lowagie.text.Element;
 import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.PdfPTable;
 
+import java.util.stream.Collectors;
+
 @RestController
 @RequestMapping("/api/wallet")
 public class WalletController {
@@ -347,7 +349,7 @@ public class WalletController {
     }
 
     @GetMapping(value = "/transactions/{username}/export/pdf", produces = "application/pdf")
-    public void exportTransactionsPdf(@PathVariable String username,
+    public void exportTransactionsPdf(@PathVariable String username,@RequestParam(required = false) String date,
                                      HttpServletResponse response) throws IOException {
 
         response.setContentType("application/pdf");
@@ -355,6 +357,19 @@ public class WalletController {
         response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
 
         var txns = transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+        
+        if (date != null && !date.isEmpty()) {
+            txns = txns.stream()
+                    .filter(tx -> {
+                        if (tx.getTimestamp() == null) return false;
+
+                        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyy-MM-dd");
+                        String txDate = sdf.format(tx.getTimestamp());
+
+                        return txDate.equals(date);
+                    })
+                    .collect(Collectors.toList());
+        }
 
         try {
             Document document = new Document();
