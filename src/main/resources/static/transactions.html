@@ -205,6 +205,7 @@ const downloadPdfBtn = document.getElementById("downloadPdfBtn");
   }
 
   // convert timestamp to local yyyy-mm-dd string for date comparison
+
   function toLocalDateString(ts) {
     if (!ts) return null;
     const d = new Date(ts);
@@ -224,6 +225,7 @@ const downloadPdfBtn = document.getElementById("downloadPdfBtn");
   }
 
   // Apply date filter (if any) and render
+
   function applyFilter() {
     const selected = filterDateInput.value; // "" or yyyy-mm-dd
     if (selected) {
@@ -231,7 +233,9 @@ const downloadPdfBtn = document.getElementById("downloadPdfBtn");
     } else {
       filtered = transactions.slice();
     }
+
     // Reset current page if it exceeds total pages
+
     const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
     if (currentPage > totalPages) currentPage = 1;
     renderTable();
