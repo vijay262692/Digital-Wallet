@@ -224,23 +224,22 @@ const downloadPdfBtn = document.getElementById("downloadPdfBtn");
     return `${y}-${m}-${day}`;
   }
 
-  // Apply date filter (if any) and render
+ // Apply date filter and render
+function applyFilter() {
+  const selected = filterDateInput.value;
 
-  function applyFilter() {
-    const selected = filterDateInput.value; // "" or yyyy-mm-dd
-    if (selected) {
-      filtered = transactions.filter(tx => toLocalDateString(tx.timestamp) === selected);
-    } else {
-      filtered = transactions.slice();
-    }
-
-    // Reset current page if it exceeds total pages
-
-    const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
-    if (currentPage > totalPages) currentPage = 1;
-    renderTable();
-    updateMeta();
+  if (selected) {
+    filtered = transactions.filter(tx => toLocalDateString(tx.timestamp) === selected);
+  } else {
+    filtered = transactions.slice();
   }
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / rowsPerPage));
+  if (currentPage > totalPages) currentPage = 1;
+
+  renderTable();
+  updateMeta();
+}
 
   function renderTable() {
     txnBody.innerHTML = "";
