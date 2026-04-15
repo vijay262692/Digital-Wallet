@@ -141,23 +141,49 @@
 
 
   // Make Payment
-  async function makePayment() {
-    const token = document.getElementById("tokenSelect").value;
-    const amount = document.getElementById("amount").value.trim();
-    const merchant = document.getElementById("merchant").value.trim();
-    const resultBox = document.getElementById("result");
+ async function makePayment() {
+  const token = document.getElementById("tokenSelect").value;
+  const amount = document.getElementById("amount").value.trim();
+  const merchant = document.getElementById("merchant").value.trim();
+  const pin = document.getElementById("pin").value.trim();
+  const resultBox = document.getElementById("result");
 
-    resultBox.textContent = "⏳ Processing...";
+  resultBox.textContent = "⏳ Processing...";
 
-    try {
+  try {
+    const res = await axios.post("/api/wallet/pay", { 
+      username, token, amount, merchant, pin 
+    });
 
-      const pin = document.getElementById("pin").value.trim();
-      const res = await axios.post("/api/wallet/pay", { username, token, amount, merchant , pin });
-      resultBox.innerHTML = `<span class="success">✅ ${res.data.message}</span>`;
-    } catch (err) {
-      resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"} </span>`;
+   
+  if (res.data.status === "SUCCESS") {
+
+    const responseData = {
+      ...res.data,
+      merchant: merchant
+    };
+
+      // ⭐ Save receipt data
+      localStorage.setItem("receipt", JSON.stringify(res.data));
+
+resultBox.innerHTML = `
+  <span class="success">✅ Payment Successful</span><br/>
+  <button onclick="openReceipt()">View Receipt</button>
+`;
+  // OPTIONAL: disable button to prevent double payment
+  document.querySelector("button").disabled = true;
+
+       window.open("receipt.html", "_blank");
+
+
+    } else {
+      resultBox.innerHTML = `<span class="error">❌ ${res.data.message}</span>`;
     }
+
+  } catch (err) {
+    resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"}</span>`;
   }
+}
 
   function logout() {
     localStorage.removeItem("loggedInUser");
@@ -165,6 +191,10 @@
   }
 
   loadCards();
+
+function openReceipt() {
+  window.open("receipt.html", "_blank");
+}
 </script>
 </body>
 </html>

@@ -33,6 +33,8 @@ import com.lowagie.text.pdf.PdfWriter;
 import com.lowagie.text.pdf.PdfPTable;
 
 import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
+
 
 @RestController
 @RequestMapping("/api/wallet")
@@ -252,14 +254,22 @@ public class WalletController {
             record.setStatus("SUCCESS");
             record.setUser(user);
             record.setWallet(wallet);
+
+            record.setStatus("SUCCESS");
+
+
+            record.setReferenceId(UUID.randomUUID().toString());
+            record.setChannel("CARD");
             transactionRepository.save(record);
 
             
          //  send email + CSV statement
             try {
                 // All transactions for this user (for statement)
-                List<TransactionRecord> userTxns =
+           //     List<TransactionRecord> userTxns =
                         transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+                
+                List<TransactionRecord> userTxns = List.of(record); // ONLY CURRENT TXN
 
                 String emailBody =
                         "Hello " + user.getUsername() + ",\n\n" +
@@ -292,6 +302,16 @@ public class WalletController {
             response.put("amount", amount);
             response.put("provider", provider);
             response.put("card", card.getMaskedPan());
+            
+            response.put("txnId", record.getId());
+          //  response.put("date", record.getTimestamp().toString());
+            
+            DateTimeFormatter formatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+
+            response.put("date", record.getTimestamp().toInstant()
+                    .atZone(java.time.ZoneId.systemDefault())
+                    .toLocalDateTime()
+                    .format(formatter));
             response.put("timestamp", record.getTimestamp().toString());
             return response;
 
