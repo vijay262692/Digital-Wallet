@@ -18,6 +18,24 @@ public class TransactionRecord {
     @ManyToOne
     @JoinColumn(name = "wallet_id")
     private Wallet wallet;  // FK
+    
+    public String getReferenceId() {
+		return referenceId;
+	}
+	public void setReferenceId(String referenceId) {
+		this.referenceId = referenceId;
+	}
+	public String getChannel() {
+		return channel;
+	}
+	public void setChannel(String channel) {
+		this.channel = channel;
+	}
+	@Column(name = "reference_id")
+    private String referenceId;
+
+    @Column(name = "channel")
+    private String channel;
 
     private String token;
     private String merchant;
