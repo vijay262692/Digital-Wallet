@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+ <meta charset="UTF-8"> 
+  <title>Payment Receipt</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f5f5f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+
+    .receipt {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      width: 350px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+    }
+
+    h2 {
+      text-align: center;
+      color: green;
+    }
+
+    .row {
+      margin: 10px 0;
+      font-size: 16px;
+    }
+
+    .label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<div class="receipt">
+  <h2>✅ Payment Successful</h2>
+
+  <div class="row"><span class="label">Merchant:</span> <span id="merchant"></span></div>
+  <div class="row"><span class="label">Amount:</span> ₹<span id="amount"></span></div>
+  <div class="row"><span class="label">Status:</span> <span id="status"></span></div>
+  <div class="row"><span class="label">Card:</span> <span id="card"></span></div>
+  <div class="row"><span class="label">Provider:</span> <span id="provider"></span></div>
+  <div class="row"><span class="label">Txn ID:</span> <span id="txnId"></span></div>
+  <div class="row"><span class="label">Date:</span> <span id="date"></span></div>
+
+</div>
+
+<script>
+const data = JSON.parse(localStorage.getItem("receipt") || "{}");
+
+const rupee = "\u20B9";
+
+document.getElementById("merchant").innerText = data.merchant || "-";
+
+document.getElementById("amount").innerText =
+  rupee + " " + Number(data.amount || 0).toLocaleString("en-IN", {
+    minimumFractionDigits: 2
+  });
+
+document.getElementById("status").innerText = data.status || "-";
+document.getElementById("card").innerText = data.card || "-";
+document.getElementById("provider").innerText = data.provider || "-";
+
+document.getElementById("txnId").innerText = data.txnId  || "-";
+
+document.getElementById("date").innerText = data.date || "-";
+</script>
+</body>
+</html>

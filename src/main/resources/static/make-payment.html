@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <title>Make Payment | Digital Wallet</title>
+
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
   <style>
@@ -18,7 +21,6 @@
       min-height: 100vh;
     }
 
-    /* Navigation */
     header {
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(10px);
@@ -30,6 +32,7 @@
       position: sticky;
       top: 0;
     }
+
     header button {
       background: transparent;
       border: none;
@@ -37,15 +40,15 @@
       cursor: pointer;
       padding: 6px 10px;
       border-radius: 6px;
-      transition: 0.3s;
       font-weight: 600;
     }
-    header button:hover { background: rgba(255,255,255,0.25); }
+
+    header button:hover {
+      background: rgba(255,255,255,0.25);
+    }
 
     h2 {
       margin-top: 40px;
-      text-align: center;
-      font-size: 28px;
     }
 
     .glass-box {
@@ -78,14 +81,10 @@
       color: white;
       font-weight: 600;
       cursor: pointer;
-      margin-top: 10px;
-      transition: 0.3s;
     }
-    button:hover { transform: translateY(-2px); }
 
     #result {
       margin-top: 12px;
-      font-size: 14px;
       font-weight: 600;
     }
 
@@ -94,6 +93,7 @@
 
   </style>
 </head>
+
 <body>
 
 <header>
@@ -107,94 +107,157 @@
 <h2>💸 Make Payment</h2>
 
 <div class="glass-box">
+
+  <!-- ⭐ Payment Mode -->
+  <select id="paymentMode">
+    <option value="WALLET">Wallet (Demo)</option>
+    <option value="RAZORPAY" selected>Razorpay</option>
+  </select>
+
   <select id="tokenSelect"></select>
   <input type="text" id="amount" placeholder="Amount (₹)" />
   <input type="text" id="merchant" placeholder="Merchant Name" />
-<input type="password" id="pin" placeholder="Enter Wallet PIN" maxlength="4" /> 
+  <input type="password" id="pin" placeholder="Enter Wallet PIN" maxlength="4" />
+
   <button onclick="makePayment()">Pay Now</button>
+
   <p id="result"></p>
 </div>
 
 <script>
-  const username = localStorage.getItem("loggedInUser");
-  if (!username) location.href = "login.html";
+const username = localStorage.getItem("loggedInUser");
+if (!username) location.href = "login.html";
 
-  // Load user's cards
- async function loadCards() {
+// Load cards
+async function loadCards() {
   try {
-
-
     const res = await axios.get(`/api/wallet/cards/${username}`);
     const cards = res.data;
-    const select = document.getElementById("tokenSelect");
 
-    // Show ONLY the token
-    select.innerHTML = cards.map(card =>
-      `<option value="${card.token}">${card.token}</option>`
-    ).join("");
+    document.getElementById("tokenSelect").innerHTML =
+      cards.map(c => `<option value="${c.token}">${c.token}</option>`).join("");
 
   } catch {
     document.getElementById("result").innerHTML =
-      `<p class="error">⚠️ Unable to load cards.</p>`;
+      `<span class="error">❌ Unable to load cards</span>`;
   }
 }
 
+// MAIN PAYMENT FUNCTION
+async function makePayment() {
 
-  // Make Payment
- async function makePayment() {
+  const mode = document.getElementById("paymentMode").value;
   const token = document.getElementById("tokenSelect").value;
   const amount = document.getElementById("amount").value.trim();
   const merchant = document.getElementById("merchant").value.trim();
   const pin = document.getElementById("pin").value.trim();
   const resultBox = document.getElementById("result");
 
-  resultBox.textContent = "⏳ Processing...";
+  if (!amount || !merchant) {
+    resultBox.innerHTML = `<span class="error">❌ Enter amount & merchant</span>`;
+    return;
+  }
 
-  try {
-    const res = await axios.post("/api/wallet/pay", { 
-      username, token, amount, merchant, pin 
-    });
+  // ================= WALLET FLOW =================
+  if (mode === "WALLET") {
 
-   
-  if (res.data.status === "SUCCESS") {
+    try {
+      resultBox.innerText = "⏳ Processing wallet payment...";
 
-    const responseData = {
-      ...res.data,
-      merchant: merchant
-    };
+      const res = await axios.post("/api/wallet/pay", {
+        username, token, amount, merchant, pin
+      });
 
-      // ⭐ Save receipt data
-      localStorage.setItem("receipt", JSON.stringify(res.data));
+      if (res.data.status === "SUCCESS") {
 
-resultBox.innerHTML = `
-  <span class="success">✅ Payment Successful</span><br/>
-  <button onclick="openReceipt()">View Receipt</button>
-`;
-  // OPTIONAL: disable button to prevent double payment
-  document.querySelector("button").disabled = true;
+        localStorage.setItem("receipt", JSON.stringify(res.data));
 
-       window.open("receipt.html", "_blank");
+        resultBox.innerHTML = `
+          <span class="success">✅ Payment Successful</span><br/>
+          <button onclick="openReceipt()">View Receipt</button>
+        `;
 
+        window.open("receipt.html", "_blank");
 
-    } else {
-      resultBox.innerHTML = `<span class="error">❌ ${res.data.message}</span>`;
+      } else {
+        resultBox.innerHTML = `<span class="error">❌ ${res.data.message}</span>`;
+      }
+
+    } catch {
+      resultBox.innerHTML = `<span class="error">❌ Wallet payment failed</span>`;
     }
 
-  } catch (err) {
-    resultBox.innerHTML = `<span class="error">❌ ${err.response?.data?.message || "Payment Failed"}</span>`;
+    return;
+  }
+
+  // ================= RAZORPAY FLOW =================
+  resultBox.innerText = "⏳ Creating order...";
+
+  try {
+    const orderRes = await axios.post("/api/wallet/create-order", { amount });
+
+    const { orderId, key, amount: amt } = orderRes.data;
+
+    const options = {
+      key,
+      amount: amt,
+      currency: "INR",
+      name: "Digital Wallet",
+      description: merchant,
+      order_id: orderId,
+
+      handler: async function (response) {
+
+        const verifyRes = await axios.post("/api/wallet/verify-payment", {
+          username,
+          amount,
+          merchant,
+          razorpayPaymentId: response.razorpay_payment_id,
+          razorpayOrderId: response.razorpay_order_id
+        });
+
+        if (verifyRes.data.status === "SUCCESS") {
+
+          localStorage.setItem("receipt", JSON.stringify(verifyRes.data));
+
+          resultBox.innerHTML = `
+            <span class="success">✅ Payment Successful</span><br/>
+            <button onclick="openReceipt()">View Receipt</button>
+          `;
+
+          window.open("receipt.html", "_blank");
+        }
+      },
+
+      theme: { color: "#007bff" }
+    };
+
+    new Razorpay(options).open();
+
+  } catch {
+    resultBox.innerHTML = `<span class="error">❌ Payment failed</span>`;
   }
 }
 
-  function logout() {
-    localStorage.removeItem("loggedInUser");
-    window.location.href = "login.html";
-  }
+// Hide PIN for Razorpay
+document.getElementById("paymentMode").addEventListener("change", (e) => {
+  document.getElementById("pin").style.display =
+    e.target.value === "WALLET" ? "block" : "none";
+});
 
-  loadCards();
-
+// Receipt
 function openReceipt() {
   window.open("receipt.html", "_blank");
 }
+
+// Logout
+function logout() {
+  localStorage.removeItem("loggedInUser");
+  location.href = "login.html";
+}
+
+loadCards();
 </script>
+
 </body>
 </html>
