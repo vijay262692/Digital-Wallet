@@ -9,7 +9,9 @@ import com.digitalwallet.service.EmailService;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.pdf.PdfWriter;
+import com.razorpay.RazorpayClient;
 
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,6 +36,8 @@ import com.lowagie.text.pdf.PdfPTable;
 
 import java.util.stream.Collectors;
 import java.time.format.DateTimeFormatter;
+
+import com.razorpay.Order;
 
 
 @RestController
@@ -322,6 +326,78 @@ public class WalletController {
         }
     }
 
+    
+    @PostMapping("/create-order")
+    public Map<String, Object> createOrder(@RequestBody Map<String, Object> req) throws Exception {
+
+        int amount = (int) Double.parseDouble(req.get("amount").toString()) * 100; // paise
+
+        RazorpayClient client = new RazorpayClient("rzp_test_Se28Uscn7MSD6b", "P172dbolGN48woEHr4mJshY0");
+
+        JSONObject options = new JSONObject();
+        options.put("amount", amount);
+        options.put("currency", "INR");
+        options.put("receipt", "txn_" + System.currentTimeMillis());
+
+        Order order = client.orders.create(options);
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("orderId", order.get("id"));
+        response.put("amount", amount);
+        response.put("key", "rzp_test_Se28Uscn7MSD6b");
+
+        return response;
+    }
+    
+    @PostMapping("/verify-payment")
+    public Map<String, Object> verifyPayment(@RequestBody Map<String, Object> req) {
+
+        String username = (String) req.get("username");
+
+        User user = userRepository.findByUsername(username).orElse(null);
+
+        // Save transaction
+        TransactionRecord record = new TransactionRecord();
+        record.setAmount(Double.parseDouble(req.get("amount").toString()));
+        record.setMerchant((String) req.get("merchant"));
+        record.setStatus("SUCCESS");
+        record.setProvider("RAZORPAY");
+        record.setToken((String) req.get("razorpayPaymentId"));
+        record.setUser(user);
+
+        transactionRepository.save(record);
+
+        // ✅ FETCH ALL TRANSACTIONS (for CSV/PDF)
+        List<TransactionRecord> transactions =
+            transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
+
+        // ✅ EMAIL BODY
+        String emailBody =
+            "Hello " + user.getUsername() + ",\n\n" +
+            "Your payment was successful.\n\n" +
+            "Amount   : ₹" + record.getAmount() + "\n" +
+            "Merchant : " + record.getMerchant() + "\n" +
+            "Provider : Razorpay\n" +
+            "Txn ID   : " + record.getId() + "\n\n" +
+            "Thanks,\nDigital Wallet Team";
+
+        // ✅ SEND EMAIL (THIS WAS MISSING)
+        emailService.sendPaymentReceiptWithCsvAndPdf(
+                user.getEmail(),
+                user.getUsername(),
+                emailBody,
+                transactions
+        );
+
+        return Map.of(
+            "status", "SUCCESS",
+            "txnId", record.getId(),
+            "amount", record.getAmount(),
+            "merchant", record.getMerchant(),
+            "provider", "RAZORPAY",
+            "timestamp", record.getTimestamp().toInstant().toString()
+        );
+    }
     @GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TransactionRecord> getTransactions() {
         List<TransactionRecord> list = transactionRepository.findAll();
