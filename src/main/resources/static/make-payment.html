@@ -191,7 +191,7 @@ async function makePayment() {
   }
 
   // ================= RAZORPAY FLOW =================
-  resultBox.innerText = "⏳ Creating order...";
+  resultBox.innerText = "⏳ RazorPay Payment...";
 
   try {
     const orderRes = await axios.post("/api/wallet/create-order", { amount });

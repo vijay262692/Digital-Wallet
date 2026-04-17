@@ -367,11 +367,11 @@ public class WalletController {
 
         transactionRepository.save(record);
 
-        // ✅ FETCH ALL TRANSACTIONS (for CSV/PDF)
+        // FETCH ALL TRANSACTIONS (for CSV/PDF)
         List<TransactionRecord> transactions =
             transactionRepository.findByUserUsernameOrderByTimestampDesc(username);
 
-        // ✅ EMAIL BODY
+        // EMAIL BODY
         String emailBody =
             "Hello " + user.getUsername() + ",\n\n" +
             "Your payment was successful.\n\n" +
@@ -381,7 +381,7 @@ public class WalletController {
             "Txn ID   : " + record.getId() + "\n\n" +
             "Thanks,\nDigital Wallet Team";
 
-        // ✅ SEND EMAIL (THIS WAS MISSING)
+        // Send Mail with PDf and csv files attched
         emailService.sendPaymentReceiptWithCsvAndPdf(
                 user.getEmail(),
                 user.getUsername(),
