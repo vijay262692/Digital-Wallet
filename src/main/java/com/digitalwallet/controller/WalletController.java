@@ -6,6 +6,7 @@ import com.digitalwallet.broker.PNOBroker;
 import com.digitalwallet.model.*;
 import com.digitalwallet.repository.*;
 import com.digitalwallet.service.EmailService;
+import com.digitalwallet.service.WhatsAppService;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.pdf.PdfWriter;
@@ -53,6 +54,7 @@ public class WalletController {
     @Autowired private TransactionRepository transactionRepository;
     @Autowired private BCryptPasswordEncoder passwordEncoder;
     @Autowired private EmailService emailService;
+    @Autowired private WhatsAppService whatsAppService;
 
     @GetMapping("/publicKey")
     public String getPublicKey() {
@@ -292,6 +294,12 @@ public class WalletController {
                         emailBody,
                         userTxns
                 );
+                
+                try {
+                    whatsAppService.sendPaymentMessage("919019157725", record);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
             } catch (Exception mailEx) {
                 // Don’t break payment if mail fails, just log
                 mailEx.printStackTrace();
@@ -388,6 +396,13 @@ public class WalletController {
                 emailBody,
                 transactions
         );
+        
+     // Send WhatsApp message
+        try {
+            whatsAppService.sendPaymentMessage("919019157725", record);
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
 
         return Map.of(
             "status", "SUCCESS",
