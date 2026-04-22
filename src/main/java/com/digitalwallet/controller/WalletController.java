@@ -297,11 +297,14 @@ public class WalletController {
                 
                 try {
                     whatsAppService.sendPaymentMessage("919019157725", record);
+                    // hardcoded the meta verified whatsapp cloud api number 
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
             } catch (Exception mailEx) {
+            	
                 // Don’t break payment if mail fails, just log
+            	
                 mailEx.printStackTrace();
             }
             

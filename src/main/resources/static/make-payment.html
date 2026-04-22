@@ -1,10 +1,12 @@
 <!DOCTYPE html>
+
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Make Payment | Digital Wallet</title>
 
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
@@ -47,9 +49,7 @@
       background: rgba(255,255,255,0.25);
     }
 
-    h2 {
-      margin-top: 40px;
-    }
+    h2 { margin-top: 40px; }
 
     .glass-box {
       background: rgba(255,255,255,0.12);
@@ -83,15 +83,11 @@
       cursor: pointer;
     }
 
-    #result {
-      margin-top: 12px;
-      font-weight: 600;
-    }
-
+    #result { margin-top: 12px; font-weight: 600; }
     .success { color: #baffc9; }
     .error { color: #ffb3b3; }
-
   </style>
+
 </head>
 
 <body>
@@ -108,27 +104,35 @@
 
 <div class="glass-box">
 
-  <!-- ⭐ Payment Mode -->
+  <!-- Payment Mode -->
+
   <select id="paymentMode">
     <option value="WALLET">Wallet (Demo)</option>
     <option value="RAZORPAY" selected>Razorpay</option>
   </select>
 
-  <select id="tokenSelect"></select>
+  <!-- Card Dropdown -->
+
+<select id="tokenSelect"></select>
+
   <input type="text" id="amount" placeholder="Amount (₹)" />
   <input type="text" id="merchant" placeholder="Merchant Name" />
+
+  <!-- PIN -->
+
   <input type="password" id="pin" placeholder="Enter Wallet PIN" maxlength="4" />
 
-  <button onclick="makePayment()">Pay Now</button>
+<button onclick="makePayment()">Pay Now</button>
 
   <p id="result"></p>
 </div>
 
 <script>
+
 const username = localStorage.getItem("loggedInUser");
 if (!username) location.href = "login.html";
 
-// Load cards
+// ================= LOAD CARDS =================
 async function loadCards() {
   try {
     const res = await axios.get(`/api/wallet/cards/${username}`);
@@ -143,7 +147,16 @@ async function loadCards() {
   }
 }
 
-// MAIN PAYMENT FUNCTION
+// ================= TOGGLE UI =================
+function toggleUI() {
+  const mode = document.getElementById("paymentMode").value;
+  const isWallet = mode === "WALLET";
+
+  document.getElementById("tokenSelect").style.display = isWallet ? "block" : "none";
+  document.getElementById("pin").style.display = isWallet ? "block" : "none";
+}
+
+// ================= PAYMENT =================
 async function makePayment() {
 
   const mode = document.getElementById("paymentMode").value;
@@ -158,9 +171,8 @@ async function makePayment() {
     return;
   }
 
-  // ================= WALLET FLOW =================
+  // ========= WALLET =========
   if (mode === "WALLET") {
-
     try {
       resultBox.innerText = "⏳ Processing wallet payment...";
 
@@ -169,7 +181,6 @@ async function makePayment() {
       });
 
       if (res.data.status === "SUCCESS") {
-
         localStorage.setItem("receipt", JSON.stringify(res.data));
 
         resultBox.innerHTML = `
@@ -178,7 +189,6 @@ async function makePayment() {
         `;
 
         window.open("receipt.html", "_blank");
-
       } else {
         resultBox.innerHTML = `<span class="error">❌ ${res.data.message}</span>`;
       }
@@ -186,16 +196,14 @@ async function makePayment() {
     } catch {
       resultBox.innerHTML = `<span class="error">❌ Wallet payment failed</span>`;
     }
-
     return;
   }
 
-  // ================= RAZORPAY FLOW =================
-  resultBox.innerText = "⏳ RazorPay Payment...";
-
+  // ========= RAZORPAY =========
   try {
-    const orderRes = await axios.post("/api/wallet/create-order", { amount });
+    resultBox.innerText = "⏳ RazorPay Payment...";
 
+    const orderRes = await axios.post("/api/wallet/create-order", { amount });
     const { orderId, key, amount: amt } = orderRes.data;
 
     const options = {
@@ -207,7 +215,6 @@ async function makePayment() {
       order_id: orderId,
 
       handler: async function (response) {
-
         const verifyRes = await axios.post("/api/wallet/verify-payment", {
           username,
           amount,
@@ -217,7 +224,6 @@ async function makePayment() {
         });
 
         if (verifyRes.data.status === "SUCCESS") {
-
           localStorage.setItem("receipt", JSON.stringify(verifyRes.data));
 
           resultBox.innerHTML = `
@@ -239,24 +245,25 @@ async function makePayment() {
   }
 }
 
-// Hide PIN for Razorpay
-document.getElementById("paymentMode").addEventListener("change", (e) => {
-  document.getElementById("pin").style.display =
-    e.target.value === "WALLET" ? "block" : "none";
-});
-
-// Receipt
+// ================= RECEIPT =================
 function openReceipt() {
   window.open("receipt.html", "_blank");
 }
 
-// Logout
+// ================= LOGOUT =================
 function logout() {
   localStorage.removeItem("loggedInUser");
   location.href = "login.html";
 }
 
-loadCards();
+// ================= INIT =================
+document.getElementById("paymentMode").addEventListener("change", toggleUI);
+
+window.onload = function () {
+  loadCards();
+  toggleUI();
+};
+
 </script>
 
 </body>
