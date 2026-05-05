@@ -26,8 +26,19 @@ public class User {
     @Column(name = "activated")
     private Boolean activated = false;
     
+    @Column(nullable = false)
+    private Double walletBalance = 0.0;
     
-    public String getWalletPin() {
+    
+    public Double getWalletBalance() {
+		return walletBalance;
+	}
+
+	public void setWalletBalance(Double walletBalance) {
+		this.walletBalance = walletBalance;
+	}
+
+	public String getWalletPin() {
 		return walletPin;
 	}
 
@@ -76,7 +87,6 @@ public class User {
     @Column(name = "otp_expiry")
     private LocalDateTime otpExpiry;
 
-    
 
 
     private String role;
