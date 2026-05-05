@@ -7,6 +7,7 @@ import com.digitalwallet.model.*;
 import com.digitalwallet.repository.*;
 import com.digitalwallet.service.EmailService;
 import com.digitalwallet.service.WhatsAppService;
+import com.digitalwallet.service.WalletService;
 import com.lowagie.text.Font;
 import com.lowagie.text.FontFactory;
 import com.lowagie.text.pdf.PdfWriter;
@@ -55,6 +56,7 @@ public class WalletController {
     @Autowired private BCryptPasswordEncoder passwordEncoder;
     @Autowired private EmailService emailService;
     @Autowired private WhatsAppService whatsAppService;
+    @Autowired private WalletService walletService;
 
     @GetMapping("/publicKey")
     public String getPublicKey() {
@@ -416,6 +418,20 @@ public class WalletController {
             "timestamp", record.getTimestamp().toInstant().toString()
         );
     }
+    
+    
+    
+
+    // 🔹 Top-up API
+    @PostMapping("/topup")
+    public String topUp(@RequestBody Map<String, Object> req) {
+
+        String username = (String) req.get("username");
+        Double amount = Double.valueOf(req.get("amount").toString());
+
+        return walletService.topUp(username, amount);
+    }
+    
     @GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TransactionRecord> getTransactions() {
         List<TransactionRecord> list = transactionRepository.findAll();

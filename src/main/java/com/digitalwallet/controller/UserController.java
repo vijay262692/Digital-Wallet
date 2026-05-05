@@ -5,6 +5,8 @@ import com.digitalwallet.common.KeyManager;
 import com.digitalwallet.model.User;
 import com.digitalwallet.service.EmailService;
 import com.digitalwallet.service.RefreshTokenService;
+import com.digitalwallet.service.JwtService;
+
 import com.digitalwallet.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -58,6 +60,9 @@ public class UserController {
     
     @Autowired
     private WalletRepository walletRepository;  
+    
+    @Autowired
+    private JwtService jwtService;
 
     /**
      *  Returns current RSA public key for encrypting login/register credentials
@@ -400,13 +405,17 @@ public class UserController {
                 response.put("message", "Invalid credentials!");
                 return response;
             }
+           
 
-            RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-            response.put("refreshToken", refreshToken.getToken());
-            
+            // 🔥 JWT TOKENS
+            String accessToken = jwtService.generateAccessToken(username);
+            String refreshToken = jwtService.generateRefreshToken(username);
+
             response.put("status", "SUCCESS");
             response.put("message", "Login successful!");
             response.put("role", user.getRole());
+            response.put("accessToken", accessToken);
+            response.put("refreshToken", refreshToken);
             return response;
 
         } catch (Exception e) {
@@ -416,32 +425,59 @@ public class UserController {
         }
     }
     
+	/*
+	 * @PostMapping("/refresh-token") public Map<String, Object>
+	 * refreshAccessToken(@RequestBody Map<String, String> body) { Map<String,
+	 * Object> response = new LinkedHashMap<>();
+	 * 
+	 * String token = body.get("refreshToken");
+	 * 
+	 * RefreshToken rt = refreshTokenRepo.findByToken(token).orElse(null);
+	 * 
+	 * if (rt == null) { response.put("status", "ERROR"); response.put("message",
+	 * "Invalid refresh token"); return response; }
+	 * 
+	 * if (refreshTokenService.isExpired(rt)) { response.put("status", "ERROR");
+	 * response.put("message", "Refresh token expired"); return response; }
+	 * 
+	 * // Generate new access token String newAccessToken =
+	 * UUID.randomUUID().toString();
+	 * 
+	 * response.put("status", "SUCCESS"); response.put("accessToken",
+	 * newAccessToken); return response; }
+	 */
+
     @PostMapping("/refresh-token")
     public Map<String, Object> refreshAccessToken(@RequestBody Map<String, String> body) {
+
         Map<String, Object> response = new LinkedHashMap<>();
 
-        String token = body.get("refreshToken");
+        try {
+            String refreshToken = body.get("refreshToken");
 
-        RefreshToken rt = refreshTokenRepo.findByToken(token).orElse(null);
+            // 🔥 Validate refresh token type
+            if (!jwtService.isRefreshToken(refreshToken)) {
+                response.put("status", "ERROR");
+                response.put("message", "Invalid refresh token");
+                return response;
+            }
 
-        if (rt == null) {
+            // 🔥 Extract username from token
+            String username = jwtService.extractUsername(refreshToken);
+
+            // 🔥 Generate new access token
+            String newAccessToken = jwtService.generateAccessToken(username);
+
+            response.put("status", "SUCCESS");
+            response.put("accessToken", newAccessToken);
+
+            return response;
+
+        } catch (Exception e) {
             response.put("status", "ERROR");
-            response.put("message", "Invalid refresh token");
+            response.put("message", "Refresh token expired or invalid");
             return response;
         }
-
-        if (refreshTokenService.isExpired(rt)) {
-            response.put("status", "ERROR");
-            response.put("message", "Refresh token expired");
-            return response;
-        }
-
-        // Generate new access token 
-        String newAccessToken = UUID.randomUUID().toString();
-
-        response.put("status", "SUCCESS");
-        response.put("accessToken", newAccessToken);
-        return response;
     }
-
+    
 }
