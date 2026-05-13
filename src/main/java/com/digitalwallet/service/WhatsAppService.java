@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import com.digitalwallet.model.TransactionRecord;
 import java.io.OutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 
 @Service
 public class WhatsAppService {
@@ -51,6 +53,7 @@ public class WhatsAppService {
             		  "to": "%s",
             		  "type": "text",
             		  "text": {
+            		    "preview_url": false,
             		    "body": "%s"
             		  }
             		}
@@ -61,7 +64,29 @@ public class WhatsAppService {
             }
 
             int responseCode = conn.getResponseCode();
+            BufferedReader reader;
+
+            if (responseCode >= 200 && responseCode < 300) {
+                reader = new BufferedReader(
+                    new InputStreamReader(conn.getInputStream())
+                );
+            } else {
+                reader = new BufferedReader(
+                    new InputStreamReader(conn.getErrorStream())
+                );
+            }
+
+            String line;
+            StringBuilder response = new StringBuilder();
+
+            while ((line = reader.readLine()) != null) {
+                response.append(line);
+            }
+
             System.out.println("WhatsApp Response Code: " + responseCode);
+            System.out.println("WhatsApp Response: " + response.toString());
+            System.out.println("WhatsApp Response Code: " + responseCode);
+            System.out.println(body);
 
         } catch (Exception e) {
             e.printStackTrace();

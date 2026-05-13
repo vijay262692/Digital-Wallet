@@ -432,6 +432,14 @@ public class WalletController {
         return walletService.topUp(username, amount);
     }
     
+    @GetMapping("/balance/{username}")
+    public Double getBalance(@PathVariable String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        return user.getWalletBalance() == null ? 0.0 : user.getWalletBalance();
+    }
+    
     @GetMapping(value = "/transactions", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<TransactionRecord> getTransactions() {
         List<TransactionRecord> list = transactionRepository.findAll();
