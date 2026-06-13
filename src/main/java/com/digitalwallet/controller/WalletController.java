@@ -250,6 +250,21 @@ public class WalletController {
                 return response;
             }
 
+            
+         // CHECK CARD BALANCE
+            if (card.getBalance() == null) {
+                card.setBalance(10000.0);
+            }
+
+            if (card.getBalance() < amount) {
+                response.put("status", "ERROR");
+                response.put("message", "Insufficient Balance");
+
+                response.put("availableBalance",
+                        card.getBalance());
+
+                return response;
+            }
             String provider = card.getProvider();
 
             // save transaction in DB
@@ -268,6 +283,9 @@ public class WalletController {
 
             record.setReferenceId(UUID.randomUUID().toString());
             record.setChannel("CARD");
+         // DEDUCT CARD BALANCE
+            card.setBalance(card.getBalance() - amount);
+            cardRepository.save(card);
             transactionRepository.save(record);
 
             
@@ -330,6 +348,12 @@ public class WalletController {
                     .toLocalDateTime()
                     .format(formatter));
             response.put("timestamp", record.getTimestamp().toString());
+         
+            response.put("remainingBalance", card.getBalance());
+
+            if (card.getBalance() < 1000) {
+                response.put("warning", "Low Balance. Please Top Up");
+            }
             return response;
 
         } catch (Exception e) {

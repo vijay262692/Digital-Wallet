@@ -28,6 +28,17 @@ public class Card {
 
     @Column(nullable = false)
     private String status;
+    
+    @Column(nullable = false)
+    private Double balance = 10000.0;
+
+    public Double getBalance() {
+        return balance;
+    }
+
+    public void setBalance(Double balance) {
+        this.balance = balance;
+    }
 
     // ---- GETTERS & SETTERS ----
     public Long getId() { return id; }
