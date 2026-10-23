@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>My Cards | Digital Wallet</title>
+  <title>Digital Cards | Digital Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
 
@@ -13,8 +13,6 @@
       background: linear-gradient(135deg, #007bff, #00c6ff);
       color: white;
     }
-
-    /* Header Navigation */
     header {
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(10px);
@@ -28,7 +26,6 @@
       position: sticky;
       top: 0;
     }
-
     header button {
       background: transparent;
       border: none;
@@ -39,44 +36,22 @@
       transition: 0.3s;
     }
     header button:hover { background: rgba(255,255,255,0.25); }
-
-    h2 {
-      text-align: center;
-      margin-top: 30px;
-      font-size: 26px;
-    }
-
+    h2 { text-align: center; margin-top: 30px; font-size: 26px; }
     .glass-box {
-      width: 85%;
-      max-width: 900px;
+      width: 90%;
+      max-width: 1050px;
       margin: 25px auto;
       background: rgba(255,255,255,0.12);
       backdrop-filter: blur(12px);
       padding: 25px;
       border-radius: 16px;
       box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+      overflow-x: auto;
     }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 15px;
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: center;
-    }
-
-    th {
-      background: rgba(255,255,255,0.25);
-      border-radius: 6px;
-    }
-
-    tr:hover {
-      background: rgba(255,255,255,0.15);
-    }
-
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; text-align: center; }
+    th { background: rgba(255,255,255,0.25); border-radius: 6px; }
+    tr:hover { background: rgba(255,255,255,0.15); }
     .status {
       padding: 4px 10px;
       border-radius: 10px;
@@ -84,12 +59,13 @@
       color: white;
     }
     .ACTIVE { background: #28a745; }
+    .PENDING { background: #17a2b8; }
     .SUSPENDED { background: #ffc107; color: #222; }
     .TERMINATED { background: #dc3545; }
-
     button.action-btn {
       border: none;
       padding: 6px 12px;
+      margin: 2px;
       border-radius: 8px;
       cursor: pointer;
       color: white;
@@ -97,10 +73,10 @@
       transition: 0.25s;
     }
     .suspend { background: #ff8c00; }
-    .activate { background: #22c55e; }
+    .activate, .resume { background: #22c55e; }
     .terminate { background: #dc3545; }
     .action-btn:hover { opacity: 0.8; }
-
+    .message { text-align: center; margin-top: 15px; }
   </style>
 </head>
 <body>
@@ -113,7 +89,7 @@
   <button onclick="logout()">🚪 Logout</button>
 </header>
 
-<h2>💳 Your Saved Cards</h2>
+<h2>💳 Digital Cards & Token Lifecycle</h2>
 
 <div class="glass-box">
   <table>
@@ -130,6 +106,7 @@
       <tr><td colspan="5">Loading...</td></tr>
     </tbody>
   </table>
+  <div id="message" class="message"></div>
 </div>
 
 <script>
@@ -138,30 +115,56 @@
 
   async function loadCards() {
     try {
-      const res = await axios.get(`/api/wallet/cards/${username}`);
-      const cards = res.data;
+      const res = await axios.get(`/api/wallet/cards/${encodeURIComponent(username)}`);
+      const cards = res.data || [];
       const tbody = document.getElementById("cardsBody");
-      tbody.innerHTML = cards.map(c => `
-        <tr>
-          <td>${c.maskedPan}</td>
-          <td>${c.provider}</td>
-          <td>${c.token}</td>
-          <td><span class="status ${c.status}">${c.status}</span></td>
-          <td>
-            <button class="action-btn suspend" onclick="updateStatus('${c.token}','SUSPENDED')">Suspend</button>
-            <button class="action-btn activate" onclick="updateStatus('${c.token}','ACTIVE')">Activate</button>
-            <button class="action-btn terminate" onclick="updateStatus('${c.token}','TERMINATED')">Terminate</button>
-          </td>
-        </tr>
-      `).join("");
-    } catch {
+
+      if (!cards.length) {
+        tbody.innerHTML = `<tr><td colspan="5">No digital cards found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = cards.map(c => {
+        const token = encodeURIComponent(c.token);
+        let actions = '';
+
+        if (c.status === 'PENDING') {
+          actions += `<button class="action-btn activate" onclick="changeLifecycle('${token}','activate')">Activate</button>`;
+        } else if (c.status === 'ACTIVE') {
+          actions += `<button class="action-btn suspend" onclick="changeLifecycle('${token}','suspend')">Suspend</button>`;
+          actions += `<button class="action-btn terminate" onclick="changeLifecycle('${token}','terminate')">Terminate</button>`;
+        } else if (c.status === 'SUSPENDED') {
+          actions += `<button class="action-btn resume" onclick="changeLifecycle('${token}','resume')">Resume</button>`;
+          actions += `<button class="action-btn terminate" onclick="changeLifecycle('${token}','terminate')">Terminate</button>`;
+        }
+
+        return `
+          <tr>
+            <td>${c.maskedPan}</td>
+            <td>${c.provider}</td>
+            <td>${c.token}</td>
+            <td><span class="status ${c.status}">${c.status}</span></td>
+            <td>${actions || 'No actions available'}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
       document.getElementById("cardsBody").innerHTML = `<tr><td colspan="5">Error loading cards.</td></tr>`;
     }
   }
 
-  async function updateStatus(token, status) {
-    await axios.post("/api/wallet/cardStatus", { username, token, status });
-    loadCards();
+  async function changeLifecycle(encodedToken, action) {
+    const token = decodeURIComponent(encodedToken);
+    try {
+      const response = await axios.post(`/api/issuance/tokens/${encodeURIComponent(token)}/${action}`);
+      const data = response.data;
+      const message = document.getElementById('message');
+      message.textContent = data.message || 'Token lifecycle update completed.';
+      loadCards();
+    } catch (err) {
+      const data = err.response && err.response.data ? err.response.data : {};
+      document.getElementById('message').textContent = data.message || 'Unable to update token status.';
+    }
   }
 
   function logout() {
