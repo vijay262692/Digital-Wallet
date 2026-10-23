@@ -2,10 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Add Card | Digital Wallet</title>
+  <title>Digital Card Issuance | Digital Wallet</title>
   <script src="https://cdn.jsdelivr.net/npm/node-forge@1.3.1/dist/forge.min.js"></script>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
-
   <style>
     body {
       background: linear-gradient(135deg, #007bff, #00c6ff);
@@ -18,8 +17,6 @@
       flex-direction: column;
       align-items: center;
     }
-
-    /* Navigation Bar */
     header {
       background: rgba(255,255,255,0.15);
       backdrop-filter: blur(10px);
@@ -31,7 +28,6 @@
       position: sticky;
       top: 0;
     }
-
     header button {
       background: transparent;
       border: none;
@@ -42,12 +38,7 @@
       font-weight: 600;
       transition: 0.3s;
     }
-
-    header button:hover {
-      background: rgba(255,255,255,0.25);
-    }
-
-    /* Card Form Box */
+    header button:hover { background: rgba(255,255,255,0.25); }
     .card-box {
       margin-top: 60px;
       background: rgba(255,255,255,0.14);
@@ -58,7 +49,6 @@
       box-shadow: 0 8px 25px rgba(0,0,0,0.28);
       text-align: center;
     }
-
     input {
       width: 100%;
       padding: 12px;
@@ -69,8 +59,8 @@
       font-size: 15px;
       background: rgba(255,255,255,0.9);
       color: #333;
+      box-sizing: border-box;
     }
-
     button.add-btn {
       width: 100%;
       padding: 12px;
@@ -84,12 +74,11 @@
       cursor: pointer;
       transition: 0.3s;
     }
-
     button.add-btn:hover { transform: translateY(-2px); }
-
     .msg { margin-top: 12px; font-size: 14px; }
     .success { color: #b4ffb4; }
     .error { color: #ffb4b4; }
+    .note { font-size: 12px; opacity: 0.85; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -97,21 +86,22 @@
 <header>
   <button onclick="location.href='dashboard.html'">🏠 Dashboard</button>
   <button onclick="location.href='view-cards.html'">💳 Cards</button>
-  <button onclick="location.href='add-card.html'">➕ Add Card</button>
+  <button onclick="location.href='add-card.html'">➕ Digital Issuance</button>
   <button onclick="location.href='make-payment.html'">💸 Pay</button>
   <button onclick="location.href='transactions.html'">📜 Transactions</button>
-  <button onclick="logout()"> Logout</button>
+  <button onclick="logout()">🚪 Logout</button>
 </header>
 
 <div class="card-box">
-  <h2>💳 Add New Card</h2>
+  <h2>💳 Digital Card Issuance</h2>
   <p id="welcome"></p>
+  <p class="note">Card credentials are RSA-encrypted in the browser. PAN/CVV are not persisted by the issuance service.</p>
 
-  <input id="pan" maxlength="16" placeholder="Card Number (16 digits)" />
+  <input id="pan" maxlength="19" placeholder="Card Number" inputmode="numeric" />
   <input id="expiry" maxlength="5" placeholder="MM/YY" />
-  <input id="cvv" maxlength="3" placeholder="CVV" type="password" />
+  <input id="cvv" maxlength="4" placeholder="CVV" type="password" />
 
-  <button class="add-btn" onclick="addCard()">Add Card</button>
+  <button class="add-btn" onclick="issueDigitalCard()">Issue Digital Card</button>
   <p id="result" class="msg"></p>
 </div>
 
@@ -119,27 +109,20 @@
   const username = localStorage.getItem("loggedInUser");
   if (!username) location.href = "login.html";
 
-  document.getElementById("welcome").innerHTML = ` Hello, <b>${username}</b>`;
+  document.getElementById("welcome").innerHTML = `Hello, <b>${username}</b>`;
 
   function logout() {
     localStorage.removeItem("loggedInUser");
     location.href = "login.html";
   }
 
-  async function addCard() {
+  async function issueDigitalCard() {
     const pan = document.getElementById("pan").value.trim();
     const expiry = document.getElementById("expiry").value.trim();
     const cvv = document.getElementById("cvv").value.trim();
     const resultDiv = document.getElementById("result");
 
-// Check if Wallet PIN is set
-    const pinStatus = await fetch(`/api/user/has-pin/${username}`).then(r => r.json());
-    if (!pinStatus.hasPin) {
-        resultDiv.innerHTML = `<span class="error">⚠️ Please set your Wallet PIN before adding a card.</span>`;
-        return;
-    }
-
-    if (pan.length !== 16 || expiry.length !== 5 || cvv.length !== 3) {
+    if (!/^\d{13,19}$/.test(pan) || !/^\d{2}\/\d{2}$/.test(expiry) || !/^\d{3,4}$/.test(cvv)) {
       resultDiv.innerHTML = `<span class="error">⚠️ Please enter valid card details.</span>`;
       return;
     }
@@ -148,17 +131,22 @@
       const pubKey = await fetch("/api/wallet/publicKey").then(r => r.text());
       const asn1 = forge.asn1.fromDer(forge.util.decode64(pubKey));
       const key = forge.pki.publicKeyFromAsn1(asn1);
-      const encrypted = forge.util.encode64(key.encrypt(`${pan}|${expiry}|${cvv}`, "RSAES-PKCS1-V1_5"));
+      const encrypted = forge.util.encode64(
+        key.encrypt(`${pan}|${expiry}|${cvv}`, "RSAES-PKCS1-V1_5")
+      );
 
-      const response = await fetch(`/api/wallet/addCard/${username}`, {
+      const response = await fetch("/api/issuance/cards", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: encrypted
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          encryptedCardPayload: encrypted
+        })
       });
 
       const result = await response.json();
       if (result.status === "SUCCESS") {
-        resultDiv.innerHTML = `<span class="success">✅ Card Added Successfully!</span>`;
+        resultDiv.innerHTML = `<span class="success">✅ Digital card issued. Token ${result.token} is ${result.tokenStatus}.</span>`;
         setTimeout(() => location.href = "view-cards.html", 1500);
       } else {
         resultDiv.innerHTML = `<span class="error">❌ ${result.message}</span>`;
