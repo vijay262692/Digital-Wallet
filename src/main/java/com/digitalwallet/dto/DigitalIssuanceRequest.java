@@ -1,7 +1,5 @@
 package com.digitalwallet.dto;
 
-import javax.validation.constraints.NotBlank;
-
 /**
  * Request used to issue and provision a digital card.
  * The card credentials are supplied as an RSA-encrypted payload and are
@@ -9,10 +7,7 @@ import javax.validation.constraints.NotBlank;
  */
 public class DigitalIssuanceRequest {
 
-    @NotBlank
     private String username;
-
-    @NotBlank
     private String encryptedCardPayload;
 
     public String getUsername() {
