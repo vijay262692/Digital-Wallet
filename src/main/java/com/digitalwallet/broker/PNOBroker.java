@@ -41,7 +41,25 @@ public class PNOBroker {
         }
         return resp;
     }
-    
+
+    /**
+     * Routes token lifecycle operations to the same network provider that
+     * originally provisioned the token.
+     */
+    public Map<String, String> updateTokenStatus(String provider, String token, String status) {
+        if (provider == null || token == null || status == null) {
+            return response("ERROR", "Provider, token and status are required");
+        }
+
+        if ("MDES".equalsIgnoreCase(provider)) {
+            return mdesService.updateTokenStatus(token, status);
+        }
+        if ("VTS".equalsIgnoreCase(provider)) {
+            return vtsService.updateTokenStatus(token, status);
+        }
+        return response("UNSUPPORTED", "Unsupported token provider: " + provider);
+    }
+
     public String processPayment(String provider, String token, double amount, String merchant) {
         if ("MDES".equalsIgnoreCase(provider)) {
             return "[MDES] Payment of ₹" + amount + " processed at " + merchant + " via token " + token;
@@ -52,4 +70,10 @@ public class PNOBroker {
         }
     }
 
+    private Map<String, String> response(String status, String message) {
+        Map<String, String> response = new HashMap<>();
+        response.put("status", status);
+        response.put("message", message);
+        return response;
+    }
 }
