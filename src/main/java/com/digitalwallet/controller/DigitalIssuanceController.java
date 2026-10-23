@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.Map;
 
 /**
@@ -25,7 +24,7 @@ public class DigitalIssuanceController {
      */
     @PostMapping("/cards")
     public ResponseEntity<Map<String, Object>> issueDigitalCard(
-            @Valid @RequestBody DigitalIssuanceRequest request) {
+            @RequestBody DigitalIssuanceRequest request) {
         Map<String, Object> response = digitalIssuanceService.issueDigitalCard(request);
         return ResponseEntity.ok(response);
     }
